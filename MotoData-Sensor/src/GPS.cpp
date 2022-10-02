@@ -53,3 +53,4 @@ char* GPS::checkForNewMessage(const char endMarker, bool errors = false)
   }
   return nullptr;
 }
+

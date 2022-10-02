@@ -20,8 +20,14 @@ class GPS {
 
     public:
         GPS( HardwareSerial& device) {hwStream = &device;}
+
+        // Class Functions
         void begin(uint32_t baudRate);
         char* checkForNewMessage(const char endMarker, bool errors);
+
+
+        //Class Vars
+        bool fix;
 
 
 
