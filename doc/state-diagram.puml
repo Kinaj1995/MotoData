@@ -1,0 +1,53 @@
+@startuml
+
+!theme plain
+
+
+
+[*] --> Startup
+
+
+
+Startup --> Ready
+Startup : Init SD-Card
+Startup : Init Sensor
+Startup : Init GPS
+Startup : Init Web Server
+
+Ready --> Calibration : Start Calibration
+Calibration : Calibrate IMU
+
+
+
+Calibration --> Ready : End Calibration
+
+
+
+Ready --> Record : Start Record
+
+state Record {
+
+    CreateNewFile --> ReadData
+    ReadData --> SaveData
+    SaveData --> ReadData
+
+    SaveData --> Ready : Stop Record
+}
+
+
+
+Ready --> [*] : Shutdown
+
+
+Startup --> WebServer
+
+state WebServer {
+    WaitForClient --> SendSite : Client Connect
+    SendSite --> WaitForClient : Client Disconnect
+    SendSite --> SendSite : Donwload Data
+}
+
+
+
+
+@enduml
