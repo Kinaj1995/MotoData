@@ -15,6 +15,7 @@ Startup : Init GPS
 Startup : Init Web Server
 
 Ready --> Calibration : Start Calibration
+Calibration : LED Blue
 Calibration : Calibrate IMU
 
 
@@ -24,8 +25,11 @@ Calibration --> Ready : End Calibration
 
 
 Ready --> Record : Start Record
+Ready : LED Green
 
 state Record {
+
+    Record : LED Red
 
     CreateNewFile --> ReadData
     ReadData --> SaveData
