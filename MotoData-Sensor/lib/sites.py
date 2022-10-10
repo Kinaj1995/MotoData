@@ -1,4 +1,4 @@
-def web_page():
+def web_page(state):
     html = """<html>
 
     <head>
@@ -34,14 +34,18 @@ def web_page():
 
     <body>
         <h2>ESP MicroPython Web Server</h2>
-        <p>LED state: <strong>""" + led_state + """</strong></p>
+        <p>LED state: <strong>""" + state + """</strong></p>
         <p>
             <i class="fas fa-lightbulb fa-3x" style="color:#c81919;"></i>
-            <a href=\"?led_2_on\"><button class="button">LED ON</button></a>
+            <a href=\"?RECORD\"><button class="button">Record</button></a>
+        </p>
+        <p>
+            <i class="fas fa-lightbulb fa-3x" style="color:#c81919;"></i>
+            <a href=\"?RECORD_STOP\"><button class="button">Record Stop</button></a>
         </p>
         <p>
             <i class="far fa-lightbulb fa-3x" style="color:#000000;"></i>
-            <a href=\"?led_2_off\"><button class="button button1">LED OFF</button></a>
+            <a href=\"?CALIBRATE\"><button class="button button1">Calibrate</button></a>
         </p>
     </body>
 
