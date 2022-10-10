@@ -123,27 +123,8 @@ sd = sdcard.SDCard(spi,CS)
 
 vfs = uos.VfsFat(sd)
 uos.mount(vfs, "/sd")
-
-
-
-
-
-
-
-"""
-# Create a file and write something to it
-with open("/sd/00004.csv", "w") as file:
-    print("Writing to data.txt...")
-    file.write("Welcome to microcontrollerslab!\r\n")
-    file.write("This is a test\r\n")
-
-# Open the file we just created and read from it
-with open("/sd/00004.csv", "r") as file:
-    print("Reading data.txt...")
-    data = file.read()
-    print(data)
-"""
 time.sleep(5)
+
 
 
 
