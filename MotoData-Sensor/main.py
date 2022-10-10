@@ -25,6 +25,7 @@ from sites import web_page
 
 # - IMU
 from lsm6dsox import LSM6DSOX
+import math
 
 # - SD Card
 import sdcard
@@ -84,10 +85,6 @@ gyroDriftX = 0.0
 gyroDriftY = 0.0
 gyroDriftZ = 0.0
 
-# units degrees (roll and pitch noisy, yaw not possible)
-accRoll  = 0.0
-accPitch  = 0.0
-accYaw = 0.0
 
 # units degrees (excellent roll, pitch, yaw minor drift)
 complementaryRoll = 0.0
@@ -156,6 +153,8 @@ time.sleep(5)
 
 SensorState = "READY"
 StateChange = True
+
+
 
 
 ## ==================== Core 1  ==================== ##
@@ -239,16 +238,21 @@ def readIMU():
     
     global gyroX, gyroY, gyroZ, accelX, accelY, accelZ
     
-    
-    accd = IMU.read_accel()
-    gyd = IMU.read_gyro()
-    
-    accelX = accd[0]
-    accelY = accd[1]
-    accelZ = accd[2]
-    gyroX = gyd[0]
-    gyroY = gyd[1]
-    gyroZ = gyd[2]
+    try:
+        accd = IMU.read_accel()
+        gyd = IMU.read_gyro()
+        
+        accelX = accd[0]
+        accelY = accd[1]
+        accelZ = accd[2]
+        gyroX = gyd[0]
+        gyroY = gyd[1]
+        gyroZ = gyd[2]
+        
+        return True
+        
+    except:
+        return False
         
     
 def calibrateIMU(delayMillis, calibrationMillis):
@@ -263,15 +267,13 @@ def calibrateIMU(delayMillis, calibrationMillis):
         
     while(time.ticks_ms() < starttime + calibrationMillis):
         
-        readIMU()
+        if(readIMU()):
         
-        sumX += gyroX
-        sumY += gyroY
-        sumZ += gyroZ
-        
-        
-        
-        calibrationCount += 1
+            sumX += gyroX
+            sumY += gyroY
+            sumZ += gyroZ        
+            
+            calibrationCount += 1
         
     if(calibrationCount == 0):
         print("Calibration faild!")
@@ -281,6 +283,24 @@ def calibrateIMU(delayMillis, calibrationMillis):
     gyroDriftX = sumX / calibrationCount
     gyroDriftY = sumY / calibrationCount
     gyroDriftZ = sumZ / calibrationCount
+
+
+def doCalculations():
+    
+    global complementaryRoll, complementaryPitch, complementaryYaw
+    
+    accRoll = math.atan2(accelY, accelZ) * 180 / math.pi
+    accPitch = math.atan2(-accelX, math.sqrt(accelY * accelY + accelZ * accelZ)) * 180 / math.pi
+    
+    lastFrequency = float(1000000.0) / lastInterval;
+    
+    complementaryRoll = complementaryRoll + ((gyroX - gyroDriftX) / lastFrequency)
+    complementaryPitch = complementaryPitch + ((gyroY - gyroDriftY) / lastFrequency)
+    complementaryYaw = complementaryYaw + ((gyroZ - gyroDriftZ) / lastFrequency)
+    
+    complementaryRoll = 0.98 * complementaryRoll + 0.02 * accRoll
+    complementaryPitch = 0.98 * complementaryPitch + 0.02 * accPitch
+    
 
 
 
@@ -320,10 +340,19 @@ while True:
         
         time.sleep(5)
         
-    if(Core0State == "RECORD"):
-        print("RECORD")
+        lastTime = time.ticks_us()
         
-        readIMU()
+    if(Core0State == "RECORD"):
+        #print("RECORD")
+        
+        if(readIMU()):
+            currentTime = time.ticks_us()
+            lastInterval = currentTime - lastTime  # expecting this to be ~104Hz +- 4%
+            lastTime = currentTime
+ 
+            doCalculations();
+            
+            
         
         """
         GPSData = GPSSerial.readline()
@@ -340,14 +369,9 @@ while True:
             f.close()
             
         
-        
-        
-        print('Accelerometer: x:{:>8.3f} y:{:>8.3f} z:{:>8.3f}'.format(*lsm.read_accel()))
-        print('Gyroscope:     x:{:>8.3f} y:{:>8.3f} z:{:>8.3f}'.format(*lsm.read_gyro()))
-        print("")
         """
         
-        time.sleep(0.1)
+        time.sleep_ms(8)
         
         
     if(Core0State == "CALIBRATE"):
