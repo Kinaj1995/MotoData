@@ -10,7 +10,7 @@ var map = L.map('map', {
 /* Control panel to display map layers */
 var controlLayers = L.control.layers(null, null, {
   position: "topright",
-  collapsed: false
+  collapsed: true
 }).addTo(map);
 
 // display Carto basemap tiles with light features and labels
@@ -29,7 +29,6 @@ controlLayers.addBaseLayer(terrain, 'Stamen Terrain basemap');
 
 // Read markers data from data.csv
 $.get("/static/upload/data.csv", function (csvString) {
-  //  $.get('./data.csv', function(csvString) {
 
   // Use PapaParse to convert string to array of objects
   var data = Papa.parse(csvString, { header: true, dynamicTyping: true }).data;
@@ -41,7 +40,7 @@ $.get("/static/upload/data.csv", function (csvString) {
 
     var marker = L.marker([row.Latitude, row.Longitude], {
       opacity: 1
-    }).bindPopup(row.Title);
+    }).bindPopup(row.Title, row.Speed);
 
     marker.addTo(map);
   }
@@ -49,6 +48,4 @@ $.get("/static/upload/data.csv", function (csvString) {
 
 });
 
-map.attributionControl.setPrefix(
-  'View <a href="https://github.com/HandsOnDataViz/leaflet-map-csv" target="_blank">code on GitHub</a>'
-);
+
