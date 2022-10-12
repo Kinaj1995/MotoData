@@ -1,0 +1,15 @@
+body {
+  padding-top: 5rem;
+}
+
+.base {
+  padding: 3rem 1.5rem;
+  text-align: center;
+}
+
+#map {
+  height: 800px;
+  width: 60%;
+  font-size: small;
+  text-align: left;
+}

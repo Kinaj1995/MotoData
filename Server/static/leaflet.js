@@ -1,16 +1,16 @@
 
 // Set up initial map center and zoom level
 var map = L.map('map', {
-  center: [41.57, -72.69], // EDIT latitude, longitude to re-center map
-  zoom: 9,  // EDIT from 1 to 18 -- decrease to zoom out, increase to zoom in
-  scrollWheelZoom: false,
+  center: [46.81, 8.22], // EDIT latitude, longitude to re-center map
+  zoom: 8,  // EDIT from 1 to 18 -- decrease to zoom out, increase to zoom in
+  scrollWheelZoom: true,
   tap: false
 });
 
 /* Control panel to display map layers */
 var controlLayers = L.control.layers(null, null, {
   position: "topright",
-  collapsed: false
+  collapsed: true
 }).addTo(map);
 
 // display Carto basemap tiles with light features and labels
@@ -28,8 +28,7 @@ controlLayers.addBaseLayer(terrain, 'Stamen Terrain basemap');
 // see more basemap options at https://leaflet-extras.github.io/leaflet-providers/preview/
 
 // Read markers data from data.csv
-$.get("data/data.csv", function (csvString) {
-  //  $.get('./data.csv', function(csvString) {
+$.get("/static/upload/data.csv", function (csvString) {
 
   // Use PapaParse to convert string to array of objects
   var data = Papa.parse(csvString, { header: true, dynamicTyping: true }).data;
@@ -41,7 +40,7 @@ $.get("data/data.csv", function (csvString) {
 
     var marker = L.marker([row.Latitude, row.Longitude], {
       opacity: 1
-    }).bindPopup(row.Title);
+    }).bindPopup(row.Title, row.Speed);
 
     marker.addTo(map);
   }
@@ -49,6 +48,4 @@ $.get("data/data.csv", function (csvString) {
 
 });
 
-map.attributionControl.setPrefix(
-  'View <a href="https://github.com/HandsOnDataViz/leaflet-map-csv" target="_blank">code on GitHub</a>'
-);
+
