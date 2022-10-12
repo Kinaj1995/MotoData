@@ -15,6 +15,7 @@ import machine, uos, os
 from machine import UART, I2C, Pin, SPI
 import time
 
+
 # - Multicore
 import utime
 import _thread
@@ -30,6 +31,9 @@ import math
 # - SD Card
 import sdcard
 import storage
+
+# - GPS
+from gps_lib import GPS_lib
 
 
 
@@ -59,6 +63,9 @@ FWT = 0 	# FileWriteTimer
 SensorState = "INIT" # States INIT, READY, INIT_RECORD, RECORD, STOP_RECORD, CALIBRATION 
 Core0State = "INIT"
 StateChange = False
+
+# - GPS
+GPSData = bytearray(255)
 
 
 
@@ -167,9 +174,15 @@ uos.mount(vfs, "/sd")
 time.sleep(5)
 
 # - GPS
-GPS_send_command(b'PMTK314,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0')
-GPS_send_command(b'PMTK220,500')
+GPS = GPS_lib()
 
+
+GPS_send_command(b'PMTK314,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0')
+
+# Set GPS update freq
+#GPS_send_command(b'PMTK220,1000') # 1HZ
+GPS_send_command(b'PMTK220,500') # 2HZ
+#GPS_send_command(b'PMTK220,200') # 5Hz
 
 
 
@@ -381,41 +394,55 @@ while True:
         FILE = open("/sd/" + FILENAME, "a")
         
         changeState("RECORD")
-        
+             
         lastTime = time.ticks_us()
 
 # ----- State Record
         
     if(Core0State == "RECORD"):
         #print("RECORD")
+        FULLMSG = False
+        GPSData = ""
         
         if(readIMU()):
             currentTime = time.ticks_us()
             lastInterval = currentTime - lastTime  # expecting this to be ~104Hz +- 4%
             lastTime = currentTime
  
-            doCalculations();
-               
+            doCalculations()
+            
+            
+        while GPSSerial.any():    
+            GPSData += str(GPSSerial.read())     
         
-        GPSData = GPSSerial.readline()				#Reads GPS Data
-        
+        if(len(GPSData) > 75):
+            GPSData = None
         
         
         #if(time.ticks_ms() > FWT + FWI):
         if(GPSData):
             FWT = time.ticks_ms()
-            printCalculations(); 
+            GPS.read(GPSData)
+            
+            print(str(complementaryRoll) + ";" + str(complementaryPitch) + ";" + str(GPS.time) + ";" + str(GPS.date) + ";" + str(GPS.fix))
+
         
             try:
-                #f = open("/sd/" + FILENAME, "a")
-                #FILE.write(str(complementaryRoll) + ";" + str(complementaryPitch) + "\n")
-                FILE.write(GPSData)
-                #f.close()
-                print("Written to File ", FILENAME)
+
+                
+                FILE.write(str(complementaryRoll) + ";" + str(complementaryPitch) + ";")
+                FILE.write(str(GPS.time) + ";" + str(GPS.date) + ";" + str(GPS.fix))
+                if(GPS.fix):
+                    FILE.write(";" + str(GPS.lat) + ";" + str(GPS.long) + ";" + str(GPS.speed) + "\n")
+                else:
+                    FILE.write("\n")
+                    
+
                 
             except TypeError as e:
                 print(e)
                 FILE.close()
+                changeState("READY")
             
         
         
