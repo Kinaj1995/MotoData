@@ -181,8 +181,8 @@ GPS_send_command(b'PMTK314,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0')
 
 # Set GPS update freq
 #GPS_send_command(b'PMTK220,1000') # 1HZ
-GPS_send_command(b'PMTK220,500') # 2HZ
-#GPS_send_command(b'PMTK220,200') # 5Hz
+#GPS_send_command(b'PMTK220,500') # 2HZ
+GPS_send_command(b'PMTK220,200') # 5Hz
 
 
 
