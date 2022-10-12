@@ -32,6 +32,8 @@ import sdcard
 import storage
 
 
+
+
 ## =============== GLOBAL FUCTIONS ================= ##
 ## Initialize all global variables, pins and interfaces
 ##
@@ -45,11 +47,16 @@ PORT = 80         # Arbitrary non-privileged port
 
 
 # - Storage
-DATAHEADER = "ROLL;PITCH;DATE;TIME;LAT;LONG;SPEED;ALT;"
+DATAHEADER = "ROLL;PITCH;DATE;TIME;LAT;LONG;SPEED;ALT\n"
 FILENAME = ""
+FILE = None
+
+# - File Write
+FWI = 500	# FileWriteInteval
+FWT = 0 	# FileWriteTimer
 
 # - States
-SensorState = "INIT" # States INIT, READY, INIT_RECORD, RECORD, CALIBRATION 
+SensorState = "INIT" # States INIT, READY, INIT_RECORD, RECORD, STOP_RECORD, CALIBRATION 
 Core0State = "INIT"
 StateChange = False
 
@@ -100,7 +107,22 @@ led = Pin(6, Pin.OUT) # Internal Pin
 ## Initialize all global variables, pins and interfaces
 ##
 ## ================================================= ##
-
+def GPS_send_command(command):
+    """Send a command string to the GPS.  If add_checksum is True (the
+    default) a NMEA checksum will automatically be computed and added.
+    Note you should NOT add the leading $ and trailing * to the command
+    as they will automatically be added!
+    """
+    add_checksum = True
+    GPSSerial.write(b"$")
+    GPSSerial.write(command)
+    if add_checksum:
+        checksum = 0
+        for char in command:
+            checksum ^= char
+        GPSSerial.write(b"*")
+        GPSSerial.write(bytes("{:02x}".format(checksum).upper(), "ascii"))
+    GPSSerial.write(b"\r\n")
 
 
 
@@ -143,6 +165,11 @@ sd = sdcard.SDCard(spi,CS)
 vfs = uos.VfsFat(sd)
 uos.mount(vfs, "/sd")
 time.sleep(5)
+
+# - GPS
+GPS_send_command(b'PMTK314,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0')
+GPS_send_command(b'PMTK220,500')
+
 
 
 
@@ -188,7 +215,7 @@ def WebServer():
                 changeState("INIT_RECORD")
 
             if btn_record_stop == 6:
-                changeState("READY")
+                changeState("STOP_RECORD")
                 
             if btn_calibrate == 6:
                 changeState("CALIBRATE")
@@ -285,7 +312,10 @@ def doCalculations():
     complementaryRoll = 0.98 * complementaryRoll + 0.02 * accRoll
     complementaryPitch = 0.98 * complementaryPitch + 0.02 * accPitch
     
-
+def printCalculations():
+    
+    print("ROLL: {}".format(complementaryRoll))
+    print("PITCH: {}".format(complementaryPitch))
 
 
 ## ==================== Core 0  ==================== ##
@@ -330,6 +360,10 @@ while True:
 # ----- State Init Record
         
     if(Core0State == "INIT_RECORD"):
+        
+        
+        
+        
         print("INIT_RECORD")
         
         # Generate new Filename for the Record
@@ -338,12 +372,13 @@ while True:
         
         # Generates new file with csv Header
         f = open("/sd/" + FILENAME, "w")
-        f.write(DATAHEADER + "\n")
+        f.write(str("ROLL;PITCH;DATE;TIME;LAT;LONG;SPEED;ALT\n"))
         f.close
         
         
-        
         time.sleep(5)
+        
+        FILE = open("/sd/" + FILENAME, "a")
         
         changeState("RECORD")
         
@@ -360,28 +395,42 @@ while True:
             lastTime = currentTime
  
             doCalculations();
-            
-           
+               
         
-        """
-        GPSData = GPSSerial.readline()
-        print(GPSData) # prints data
+        GPSData = GPSSerial.readline()				#Reads GPS Data
         
-        try:
-            f = open("/sd/" + FILENAME, "a")
-            f.write(GPSData)
-            f.close()
-            print("Written to File ", FILENAME)
-            
-        except TypeError as e:
-            print(e)
-            f.close()
+        
+        
+        #if(time.ticks_ms() > FWT + FWI):
+        if(GPSData):
+            FWT = time.ticks_ms()
+            printCalculations(); 
+        
+            try:
+                #f = open("/sd/" + FILENAME, "a")
+                #FILE.write(str(complementaryRoll) + ";" + str(complementaryPitch) + "\n")
+                FILE.write(GPSData)
+                #f.close()
+                print("Written to File ", FILENAME)
+                
+            except TypeError as e:
+                print(e)
+                FILE.close()
             
         
-        """
+        
         
         time.sleep_ms(50)
 
+# ----- State Calibration
+
+    if(Core0State == "STOP_RECORD"):
+        print(" --- STOP_RECORD ---")
+        FILE.close()
+        
+        time.sleep(2)
+        
+        changeState("READY")
 
 # ----- State Calibration
 
