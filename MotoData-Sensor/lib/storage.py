@@ -20,10 +20,10 @@ def getNewFileName(dir_list):
         for i in range (5 - len(str(filename))):
             nfn = nfn + "0"
 
-        filename = nfn + str(filename) + ".txt"
+        filename = nfn + str(filename) + ".csv"
         
     else:
-        filename = "00001.txt"
+        filename = "00001.csv"
                 
     
     return filename

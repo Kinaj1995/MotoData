@@ -45,10 +45,11 @@ PORT = 80         # Arbitrary non-privileged port
 
 
 # - Storage
+DATAHEADER = "ROLL;PITCH;DATE;TIME;LAT;LONG;SPEED;ALT;"
 FILENAME = ""
 
 # - States
-SensorState = "INIT" # States INIT, READY, RECORD, CALIBRATION 
+SensorState = "INIT" # States INIT, READY, INIT_RECORD, RECORD, CALIBRATION 
 Core0State = "INIT"
 StateChange = False
 
@@ -85,7 +86,6 @@ gyroDriftX = 0.0
 gyroDriftY = 0.0
 gyroDriftZ = 0.0
 
-
 # units degrees (excellent roll, pitch, yaw minor drift)
 complementaryRoll = 0.0
 complementaryPitch = 0.0
@@ -95,6 +95,25 @@ complementaryYaw = 0.0
 # - Pindefinitions
 led = Pin(6, Pin.OUT) # Internal Pin
 
+
+## ================ GLOBAL Functions =============== ##
+## Initialize all global variables, pins and interfaces
+##
+## ================================================= ##
+
+
+
+
+def changeState(endState):
+    global SensorState
+    global StateChange
+    
+    
+    sLock.acquire()
+    SensorState = endState
+    StateChange = True
+    sLock.release()
+    
 
 
 
@@ -146,8 +165,6 @@ StateChange = True
 def WebServer():
     while True:
         
-        global SensorState
-        global StateChange
         
         try:
             cl, addr = s.accept()
@@ -168,29 +185,14 @@ def WebServer():
             
             
             if btn_record == 6:
-                
-                sLock.acquire()
-                SensorState = "RECORD"
-                StateChange = True
-                sLock.release()
-                
-                led.on()
+                changeState("INIT_RECORD")
+
             if btn_record_stop == 6:
+                changeState("READY")
                 
-                sLock.acquire()
-                SensorState = "READY"
-                StateChange = True
-                sLock.release()
-                
-                led.off()
             if btn_calibrate == 6:
-                
-                sLock.acquire()
-                SensorState = "CALIBRATE"
-                StateChange = True
-                sLock.release()
-                
-                led.off()                
+                changeState("CALIBRATE")
+               
            
             
             
@@ -208,6 +210,7 @@ def WebServer():
 
 
 _thread.start_new_thread(WebServer, ()) # Starts the WebServer on Core1
+
 
 
 ## ==================== IMU Calc =================== ##
@@ -309,19 +312,44 @@ while True:
         print("State changed.")
     
     
+
+        
+        
+    
+# ----- State READY  
     
     if(Core0State == "READY"):
         print("READY")
         
-        # Generate new Filename for next Record
+
+               
+        
+        time.sleep(5)
+        
+
+# ----- State Init Record
+        
+    if(Core0State == "INIT_RECORD"):
+        print("INIT_RECORD")
+        
+        # Generate new Filename for the Record
         dir_list =  os.listdir("/sd")
         FILENAME = storage.getNewFileName(dir_list)
+        
+        # Generates new file with csv Header
+        f = open("/sd/" + FILENAME, "w")
+        f.write(DATAHEADER + "\n")
+        f.close
         
         
         
         time.sleep(5)
         
+        changeState("RECORD")
+        
         lastTime = time.ticks_us()
+
+# ----- State Record
         
     if(Core0State == "RECORD"):
         #print("RECORD")
@@ -333,7 +361,7 @@ while True:
  
             doCalculations();
             
-            
+           
         
         """
         GPSData = GPSSerial.readline()
@@ -352,9 +380,11 @@ while True:
         
         """
         
-        time.sleep_ms(8)
-        
-        
+        time.sleep_ms(50)
+
+
+# ----- State Calibration
+
     if(Core0State == "CALIBRATE"):
         print(" --- CALIBRATE ---")
         
@@ -369,16 +399,9 @@ while True:
         
         time.sleep(2)
         
-        if(sLock.locked() == False and StateChange == False):        
+        changeState("READY")
         
-            # We acquire the semaphore lock
-            sLock.acquire()
-            
-            SensorState = "READY"
-            StateChange = True
-            
-            # We release the semaphore lock
-            sLock.release()
+
                         
 
         
