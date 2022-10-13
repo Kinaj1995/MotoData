@@ -185,13 +185,13 @@ GPS_send_command(b'PMTK314,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0') 		# only GPRM
 #GPS_send_command(b'PMTK314,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0')		* Turn off all messages
 
 # Set GPS update freq (Just data Sending)
-#GPS_send_command(b'PMTK220,1000') 					# 1HZ
+GPS_send_command(b'PMTK220,1000') 					# 1HZ
 #GPS_send_command(b'PMTK220,500') 					# 2HZ
-GPS_send_command(b'PMTK220,200') 					# 5Hz
+#GPS_send_command(b'PMTK220,200') 					# 5Hz
 
 # Set GPS Pos Update
-#GPS_send_command(b'PMTK300,1000,0,0,0,0')			# 1HZ
-GPS_send_command(b'PMTK300,200,0,0,0,0')			# 5HZ
+GPS_send_command(b'PMTK300,1000,0,0,0,0')			# 1HZ
+#GPS_send_command(b'PMTK300,200,0,0,0,0')			# 5HZ
 
 
 
@@ -239,7 +239,7 @@ def WebServer():
             if btn_calibrate == 6:
                 changeState("CALIBRATE")
                
-           
+               
             
             
             cl.send('HTTP/1.0 200 OK\r\nContent-type: text/html\r\n\r\n')
@@ -430,6 +430,7 @@ while True:
         
         
         if(GPSData):
+            print(GPSData)
             nowtime = time.ticks_ms()
             interval = nowtime - timeCount
             timeCount = nowtime
@@ -464,7 +465,7 @@ while True:
         
         time.sleep_ms(50)
 
-# ----- State Calibration
+# ----- State STOP_RECORD
 
     if(Core0State == "STOP_RECORD"):
         print(" --- STOP_RECORD ---")
