@@ -5,8 +5,9 @@ def convertTime(ts):
     hours = ts[0:2]
     min = ts[2:4]
     sec = ts[4:6]
+    ms = ts[7:9]
     
-    return hours + ":" + min + ":" + sec
+    return hours + ":" + min + ":" + sec + "." + ms
 
 def convertDate(ds):
     
@@ -42,19 +43,13 @@ class GPS_lib():
             
             try:
                 if(GPS_MESG[0] == "$GNRMC"):
-                    print("GNRMC Message found")
-
                     self.time = convertTime(GPS_MESG[1])
                     self.date = convertDate(GPS_MESG[9])
 
                     if(GPS_MESG[2] == "V"):
-                        print("no GPS Fix")
                         self.fix = False
 
-
-
-                    if(GPS_MESG[2] == "A"):
-                        print("GPS Fix")                    
+                    if(GPS_MESG[2] == "A"):         
                         self.fix = True
                         self.lat = GPS_MESG[3]
                         self.long = GPS_MESG[5]

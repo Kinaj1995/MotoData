@@ -66,6 +66,8 @@ StateChange = False
 
 # - GPS
 GPSData = bytearray(255)
+timeCount = time.ticks_ms()
+loopCount = 0
 
 
 
@@ -176,8 +178,8 @@ time.sleep(5)
 # - GPS
 GPS = GPS_lib()
 
-
-GPS_send_command(b'PMTK314,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0')
+# Set GPS output
+GPS_send_command(b'PMTK314,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0') # GPRMC
 
 # Set GPS update freq
 #GPS_send_command(b'PMTK220,1000') # 1HZ
@@ -385,13 +387,14 @@ while True:
         
         # Generates new file with csv Header
         f = open("/sd/" + FILENAME, "w")
-        f.write(str("ROLL;PITCH;DATE;TIME;LAT;LONG;SPEED;ALT\n"))
+        f.write("ROLL;PITCH;DATE;TIME;LAT;LONG;SPEED;ALT\n")
         f.close
         
         
         time.sleep(5)
         
         FILE = open("/sd/" + FILENAME, "a")
+        loopCount = 0
         
         changeState("RECORD")
              
@@ -403,6 +406,8 @@ while True:
         #print("RECORD")
         FULLMSG = False
         GPSData = ""
+        
+        
         
         if(readIMU()):
             currentTime = time.ticks_us()
@@ -417,19 +422,25 @@ while True:
         
         if(len(GPSData) > 75):
             GPSData = None
+        time.ticks_ms()
         
         
-        #if(time.ticks_ms() > FWT + FWI):
         if(GPSData):
+            nowtime = time.ticks_ms()
+            interval = nowtime - timeCount
+            timeCount = nowtime
+            
+            loopCount += 1
+            
             FWT = time.ticks_ms()
             GPS.read(GPSData)
             
-            print(str(complementaryRoll) + ";" + str(complementaryPitch) + ";" + str(GPS.time) + ";" + str(GPS.date) + ";" + str(GPS.fix))
+            print(str(loopCount) + ";" + str(interval) + ";" + str(complementaryRoll) + ";" + str(complementaryPitch) + ";" + str(GPS.time) + ";" + str(GPS.date) + ";" + str(GPS.fix))
 
         
             try:
 
-                
+                FILE.write(str(loopCount) + ";" + str(interval) + ";" )
                 FILE.write(str(complementaryRoll) + ";" + str(complementaryPitch) + ";")
                 FILE.write(str(GPS.time) + ";" + str(GPS.date) + ";" + str(GPS.fix))
                 if(GPS.fix):
