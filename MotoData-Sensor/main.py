@@ -179,15 +179,19 @@ time.sleep(5)
 GPS = GPS_lib()
 
 # Set GPS output
-GPS_send_command(b'PMTK314,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0') # GPRMC
+GPS_send_command(b'PMTK314,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0') 		# only GPRMC
+#GPS_send_command(b'PMTK314,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0') 	# only GPGGA
+#GPS_send_command(b'PMTK314,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0') 	# GPRMC and GPGGA
+#GPS_send_command(b'PMTK314,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0')		* Turn off all messages
 
-# Set GPS update freq
-#GPS_send_command(b'PMTK220,1000') # 1HZ
-#GPS_send_command(b'PMTK220,500') # 2HZ
-GPS_send_command(b'PMTK220,200') # 5Hz
+# Set GPS update freq (Just data Sending)
+#GPS_send_command(b'PMTK220,1000') 					# 1HZ
+#GPS_send_command(b'PMTK220,500') 					# 2HZ
+GPS_send_command(b'PMTK220,200') 					# 5Hz
 
-
-
+# Set GPS Pos Update
+#GPS_send_command(b'PMTK300,1000,0,0,0,0')			# 1HZ
+GPS_send_command(b'PMTK300,200,0,0,0,0')			# 5HZ
 
 
 
