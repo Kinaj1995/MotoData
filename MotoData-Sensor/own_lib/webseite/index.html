@@ -1,10 +1,7 @@
-def web_page(state):
-    html = """<html>
+<html>
 
     <head>
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css"
-         integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
         <style>
             html {
                 font-family: Arial;
@@ -33,21 +30,17 @@ def web_page(state):
     </head>
 
     <body>
-        <h2>ESP MicroPython Web Server</h2>
-        <p>LED state: <strong>""" + state + """</strong></p>
+        <h2>MotoData Sensor Site</h2>
+        <p>Current Sensor State: <strong>""" + state + """</strong></p>
         <p>
-            <i class="fas fa-lightbulb fa-3x" style="color:#c81919;"></i>
             <a href=\"?RECORD\"><button class="button">Record</button></a>
         </p>
         <p>
-            <i class="fas fa-lightbulb fa-3x" style="color:#c81919;"></i>
             <a href=\"?RECORD_STOP\"><button class="button">Record Stop</button></a>
         </p>
         <p>
-            <i class="far fa-lightbulb fa-3x" style="color:#000000;"></i>
             <a href=\"?CALIBRATE\"><button class="button button1">Calibrate</button></a>
         </p>
     </body>
 
-    </html>"""
-    return html
+    </html>

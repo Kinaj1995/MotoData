@@ -220,7 +220,7 @@ def WebServer():
             #print(request)
 
             request = str(request)
-            response = web_page(SensorState)
+            
             
             
             #print('GET Rquest Content = %s' % request)
@@ -239,7 +239,7 @@ def WebServer():
             if btn_calibrate == 6:
                 changeState("CALIBRATE")
                
-               
+            response = web_page(SensorState)   
             
             
             cl.send('HTTP/1.0 200 OK\r\nContent-type: text/html\r\n\r\n')
