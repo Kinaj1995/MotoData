@@ -8,8 +8,8 @@
 ## ==================== Imports ==================== ##
 ## Add libaries to import here
 ##
-## 		!! Make shure you created a "lib" folder on
-##		the device and add the "sdcard.py" file to it !!
+## 	!! Make shure you created a "lib and log" folder on
+##	the device and add the lib files to it !!
 ## ================================================= ##
 import machine, uos, os
 from machine import UART, I2C, Pin, SPI
@@ -33,12 +33,15 @@ import sdcard
 import storage
 
 # - GPS
-from gps_lib import GPS_lib
+from gps_lib import GPS_lib, GPSNoCompDataType, GPSMessageError
 
 
 
 
-## =============== GLOBAL FUCTIONS ================= ##
+
+
+
+## =================== USER VARS =================== ##
 ## Initialize all global variables, pins and interfaces
 ##
 ## ================================================= ##
@@ -50,17 +53,21 @@ HOST = ''           # Use first available interface
 PORT = 80         # Arbitrary non-privileged port
 
 
+## ================== GLOBAL VARS ================== ##
+## Initialize all global variables, pins and interfaces
+##
+## ================================================= ##
+
 # - Storage
-DATAHEADER = "ROLL;PITCH;DATE;TIME;LAT;LONG;SPEED;ALT\n"
+DATAHEADER = "LOOPCOUNT;INTERVAL(ms);ROLL;PITCH;TIME;DATE;LAT;LONG;SPEED;ALT\n"
 FILENAME = ""
 FILE = None
+MAXLINECOUNT = 10000
 
-# - File Write
-FWI = 500	# FileWriteInteval
-FWT = 0 	# FileWriteTimer
+
 
 # - States
-SensorState = "INIT" # States INIT, READY, INIT_RECORD, RECORD, STOP_RECORD, CALIBRATION 
+SensorState = "INIT" # States INIT, READY, INIT_RECORD, RECORD, STOP_RECORD, CALIBRATION, RENEW_FILE
 Core0State = "INIT"
 StateChange = False
 
@@ -69,14 +76,6 @@ GPSData = bytearray(255)
 timeCount = time.ticks_ms()
 loopCount = 0
 
-
-
-
-
-## ================== GLOBAL VARS ================== ##
-## Initialize all global variables, pins and interfaces
-##
-## ================================================= ##
 
 # - Semaphores
 sLock = _thread.allocate_lock()
@@ -116,13 +115,7 @@ led = Pin(6, Pin.OUT) # Internal Pin
 ## Initialize all global variables, pins and interfaces
 ##
 ## ================================================= ##
-def GPS_send_command(command):
-    """Send a command string to the GPS.  If add_checksum is True (the
-    default) a NMEA checksum will automatically be computed and added.
-    Note you should NOT add the leading $ and trailing * to the command
-    as they will automatically be added!
-    """
-    add_checksum = True
+def GPS_send_command(command, add_checksum):
     GPSSerial.write(b"$")
     GPSSerial.write(command)
     if add_checksum:
@@ -132,6 +125,7 @@ def GPS_send_command(command):
         GPSSerial.write(b"*")
         GPSSerial.write(bytes("{:02x}".format(checksum).upper(), "ascii"))
     GPSSerial.write(b"\r\n")
+    time.sleep(1)
 
 
 
@@ -141,11 +135,16 @@ def changeState(endState):
     
     
     sLock.acquire()
+       
     SensorState = endState
     StateChange = True
+        
     sLock.release()
     
-
+def errorLog(time, date, message):
+    errorlogFile = open("/log/error.log", "a")
+    errorlogFile.write(str(date) + "--" + str(time) + "-- " + str(message) + "\n")
+    errorlogFile.close()
 
 
 ## ====================  INIT   ==================== ##
@@ -153,18 +152,10 @@ def changeState(endState):
 ##
 ## ================================================= ##
 
-# - Init W-Lan
-wlan = network.WLAN(network.AP_IF)
-wlan.active(True)
-wlan.config(essid=SSID, key=KEY, security=wlan.WEP, channel=2)
-print("AP mode started. SSID: {} IP: {}".format(SSID, wlan.ifconfig()[0]))
 
 
-# - Init Webserver
-addr = socket.getaddrinfo('0.0.0.0', 80)[0][-1]
-s = socket.socket()
-s.bind(addr)
-s.listen(1)
+# - ErrorLog
+
 
 # - SD-Card
 CS = machine.Pin(5, machine.Pin.OUT)
@@ -179,19 +170,20 @@ time.sleep(5)
 GPS = GPS_lib()
 
 # Set GPS output
-GPS_send_command(b'PMTK314,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0') 		# only GPRMC
-#GPS_send_command(b'PMTK314,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0') 	# only GPGGA
-#GPS_send_command(b'PMTK314,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0') 	# GPRMC and GPGGA
-#GPS_send_command(b'PMTK314,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0')		* Turn off all messages
-
-# Set GPS update freq (Just data Sending)
-#GPS_send_command(b'PMTK220,1000') 					# 1HZ
-GPS_send_command(b'PMTK220,500') 					# 2HZ
-#GPS_send_command(b'PMTK220,200') 					# 5Hz
+GPS_send_command(b'PMTK314,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0', True) 		# only GPRMC
+#GPS_send_command(b'PMTK314,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0', True) 	# only GPGGA
+#GPS_send_command(b'PMTK314,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0', True) 	# GPRMC and GPGGA
+#GPS_send_command(b'PMTK314,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0', True)		* Turn off all messages
 
 # Set GPS Pos Update
-#GPS_send_command(b'PMTK300,1000,0,0,0,0')			# 1HZ
-GPS_send_command(b'PMTK300,200,0,0,0,0')			# 5HZ
+#GPS_send_command(b'PMTK220,1000', True) 					# 1HZ
+#GPS_send_command(b'PMTK220,500', True) 					# 2HZ
+GPS_send_command(b'PMTK220,200', True) 					# 5Hz
+
+# Set GPS update freq (Just data Sending)
+#GPS_send_command(b'PMTK300,1000,0,0,0,0', True)			# 1HZ
+#GPS_send_command(b'PMTK300,500,0,0,0,0', True)			# 2HZ
+GPS_send_command(b'PMTK300,200,0,0,0,0', True)			# 5HZ
 
 
 
@@ -209,6 +201,22 @@ StateChange = True
 ## ================================================= ##
 
 def WebServer():
+    
+    
+    # - Init W-Lan
+    wlan = network.WLAN(network.AP_IF)
+    wlan.active(True)
+    wlan.config(essid=SSID, key=KEY, security=wlan.WEP, channel=2)
+    print("AP mode started. SSID: {} IP: {}".format(SSID, wlan.ifconfig()[0]))
+
+
+    # - Init Webserver
+    addr = socket.getaddrinfo('0.0.0.0', 80)[0][-1]
+    s = socket.socket()
+    s.bind(addr)
+    s.listen(1)
+    
+    
     while True:
         
         
@@ -379,10 +387,6 @@ while True:
 # ----- State Init Record
         
     if(Core0State == "INIT_RECORD"):
-        
-        
-        
-        
         print("INIT_RECORD")
         
         # Generate new Filename for the Record
@@ -391,24 +395,37 @@ while True:
         
         # Generates new file with csv Header
         f = open("/sd/" + FILENAME, "w")
-        f.write("ROLL;PITCH;DATE;TIME;LAT;LONG;SPEED;ALT\n")
-        f.close
+        f.write(DATAHEADER)
+        f.close()
         
-        
-        time.sleep(5)
         
         FILE = open("/sd/" + FILENAME, "a")
-        loopCount = 0
-        
+                
         changeState("RECORD")
-             
+        
+        loopCount = 0
+        lastTime = time.ticks_us()
+        
+# ----- State Renew File
+        
+    if(Core0State == "RENEW_FILE"):
+        print("RENEW_FILE")
+        
+        # Generate new Filename for the Record
+        dir_list =  os.listdir("/sd")
+        FILENAME = storage.getNewFileName(dir_list)
+                
+        FILE = open("/sd/" + FILENAME, "a")
+               
+        changeState("RECORD")
+        
+        loopCount = 0
         lastTime = time.ticks_us()
 
 # ----- State Record
         
     if(Core0State == "RECORD"):
         #print("RECORD")
-        FULLMSG = False
         GPSData = ""
         
         
@@ -417,51 +434,87 @@ while True:
             currentTime = time.ticks_us()
             lastInterval = currentTime - lastTime  # expecting this to be ~104Hz +- 4%
             lastTime = currentTime
- 
+     
             doCalculations()
-            
-            
+                
+
+        
+      
+        #-- Read Data from Serial if avaiable       
         while GPSSerial.any():    
             GPSData += str(GPSSerial.read())     
         
+
         
-        
+        # -- If revieved Date is over 100 Chars discard
         if(len(GPSData) > 100):
             GPSData = None
             
         time.ticks_ms()
                 
-        
+        # -- When GPS Data is recived it will get processed
         if(GPSData):
-            print(GPSData)
+            
+            # -- Timing between each GPS Date recieved
             nowtime = time.ticks_ms()
             interval = nowtime - timeCount
             timeCount = nowtime
             
-            loopCount += 1
-            
-            FWT = time.ticks_ms()
-            GPS.read(GPSData)
-            
-            print(str(loopCount) + ";" + str(interval) + ";" + str(complementaryRoll) + ";" + str(complementaryPitch) + ";" + str(GPS.time) + ";" + str(GPS.date) + ";" + str(GPS.fix))
+            loopCount += 1		# Loopcount von Record Loop
 
-        
+            # -- Parsing GPS Data            
             try:
+                
+                GPS.read(GPSData)
+                        
+            except GPSMessageError:
+                print("GPS Message Error")
+                errorLog(GPS.time, GPS.date, "GPS Message Error")
+            
+            except GPSNoCompDataType:
+                print("GPS Message Error")
+                errorLog(GPS.time, GPS.date, "no complete GPS Message")
+            
+            except MemoryError as e:
+                print(e)
+                errorlLog(GPS.time, GPS.date, "MemoryError: " + e)
+                time.sleep(5)
+                
+            
+            # -- File writing
+            try:
+                
 
                 FILE.write(str(loopCount) + ";" + str(interval) + ";" )
                 FILE.write(str(complementaryRoll) + ";" + str(complementaryPitch) + ";")
                 FILE.write(str(GPS.time) + ";" + str(GPS.date) + ";" + str(GPS.fix))
+                
                 if(GPS.fix):
                     FILE.write(";" + str(GPS.lat) + ";" + str(GPS.long) + ";" + str(GPS.speed) + "\n")
                 else:
                     FILE.write("\n")
-                    
-
                 
+
+
+
             except TypeError as e:
                 print(e)
+                errorlLog(GPS.time, GPS.date, "TypeError: File Write")
                 FILE.close()
                 changeState("READY")
+                
+                
+            if(loopCount >= MAXLINECOUNT):
+                FILE.close()
+                changeState("RENEW_FILE")
+            
+            
+            # -- Debug Print
+            print(GPSData)
+            print(str(loopCount) + ";" + str(interval) + ";" + str(complementaryRoll) + ";" + str(complementaryPitch) + ";" + str(GPS.time) + ";" + str(GPS.date) + ";" + str(GPS.fix))
+
+          
+                
             
         
         
@@ -472,7 +525,13 @@ while True:
 
     if(Core0State == "STOP_RECORD"):
         print(" --- STOP_RECORD ---")
-        FILE.close()
+        
+        try:
+            FILE.close()
+        
+        except AttributeError as e:
+            print(e)
+            errorlLog(GPS.time, GPS.date, "AttributeError: STOP_RECORD")
         
         time.sleep(2)
         
@@ -501,21 +560,7 @@ while True:
 
         
         
-    
-    
-    """
-    val = uart.read(120)  # reads up to 5 bytes
-       
-        
-    print(val) # prints data
-    
-    print('Accelerometer: x:{:>8.3f} y:{:>8.3f} z:{:>8.3f}'.format(*lsm.read_accel()))
-    print('Gyroscope:     x:{:>8.3f} y:{:>8.3f} z:{:>8.3f}'.format(*lsm.read_gyro()))
-    print("")
-    
-        
-    time.sleep(0.1)
-    """
+
     
 
     
