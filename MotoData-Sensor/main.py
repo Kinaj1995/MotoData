@@ -30,7 +30,7 @@ import math
 
 # - SD Card
 import sdcard
-import storage
+from storage import STORAGE_lib
 
 # - GPS
 from gps_lib import GPS_lib, GPSNoCompDataType, GPSMessageError
@@ -53,6 +53,7 @@ HOST = ''           # Use first available interface
 PORT = 80         # Arbitrary non-privileged port
 
 
+
 ## ================== GLOBAL VARS ================== ##
 ## Initialize all global variables, pins and interfaces
 ##
@@ -65,11 +66,11 @@ FILE = None
 MAXLINECOUNT = 10000
 
 
-
 # - States
 SensorState = "INIT" # States INIT, READY, INIT_RECORD, RECORD, STOP_RECORD, CALIBRATION, RENEW_FILE
 Core0State = "INIT"
 StateChange = False
+
 
 # - GPS
 GPSData = bytearray(255)
@@ -80,11 +81,14 @@ loopCount = 0
 # - Semaphores
 sLock = _thread.allocate_lock()
 
+
 # - SerialPort for GPS
 GPSSerial = UART(0, baudrate=9600, tx=Pin(0), rx=Pin(1))
 
+
 # - IMU 
 IMU = LSM6DSOX(I2C(0, scl=Pin(13), sda=Pin(12)))		# Init I2C Connection
+
 
 # units m/s/s i.e. accelZ if often 9.8 (gravity)
 accelX = 0.0
@@ -151,11 +155,18 @@ def errorLog(time, date, message):
 ## Initialize all Sensors an Objects
 ##
 ## ================================================= ##
+# - Init W-Lan
+wlan = network.WLAN(network.AP_IF)
+wlan.active(True)
+wlan.config(essid=SSID, key=KEY, security=wlan.WEP, channel=2)
+print("AP mode started. SSID: {} IP: {}".format(SSID, wlan.ifconfig()[0]))
 
 
-
-# - ErrorLog
-
+# - Init Webserver
+addr = socket.getaddrinfo('0.0.0.0', 80)[0][-1]
+s = socket.socket()
+s.bind(addr)
+s.listen(1)
 
 # - SD-Card
 CS = machine.Pin(5, machine.Pin.OUT)
@@ -168,6 +179,9 @@ time.sleep(5)
 
 # - GPS
 GPS = GPS_lib()
+
+# - Storage
+STR = STORAGE_lib()
 
 # Set GPS output
 GPS_send_command(b'PMTK314,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0', True) 		# only GPRMC
@@ -203,18 +217,7 @@ StateChange = True
 def WebServer():
     
     
-    # - Init W-Lan
-    wlan = network.WLAN(network.AP_IF)
-    wlan.active(True)
-    wlan.config(essid=SSID, key=KEY, security=wlan.WEP, channel=2)
-    print("AP mode started. SSID: {} IP: {}".format(SSID, wlan.ifconfig()[0]))
 
-
-    # - Init Webserver
-    addr = socket.getaddrinfo('0.0.0.0', 80)[0][-1]
-    s = socket.socket()
-    s.bind(addr)
-    s.listen(1)
     
     
     while True:
@@ -391,15 +394,15 @@ while True:
         
         # Generate new Filename for the Record
         dir_list =  os.listdir("/sd")
-        FILENAME = storage.getNewFileName(dir_list)
+        FILENAME = STR.getNewFileName(dir_list)
         
         # Generates new file with csv Header
-        f = open("/sd/" + FILENAME, "w")
+        f = open("/sd/" + STR.getFilename(), "w")
         f.write(DATAHEADER)
         f.close()
         
         
-        FILE = open("/sd/" + FILENAME, "a")
+        FILE = open("/sd/" + STR.getFilename(), "a")
                 
         changeState("RECORD")
         
@@ -413,9 +416,9 @@ while True:
         
         # Generate new Filename for the Record
         dir_list =  os.listdir("/sd")
-        FILENAME = storage.getNewFileName(dir_list)
+        FILENAME = STR.increaseFileName(FILENAME)
                 
-        FILE = open("/sd/" + FILENAME, "a")
+        FILE = open("/sd/" + STR.getFilename(), "a")
                
         changeState("RECORD")
         
