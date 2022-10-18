@@ -47,7 +47,7 @@
       <hr>
       <ul class="nav nav-pills flex-column mb-auto">
         <li>
-          <button type="button" class="nav-link text-white" data-bs-toggle="modal" data-bs-target="#exampleModal">
+          <button type="button" class="nav-link text-white" data-bs-toggle="modal" data-bs-target="#uploadModal">
             <svg class="bi pe-none me-2" width="16" height="16">
               <use xlink:href="#home" />
             </svg>
@@ -65,11 +65,8 @@
             <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
               {% for file in files %}
               <li>
-                <button type="button" class="btn link-white text-white" data-bs-toggle="button">{{file}}</button>
+                <button type="button" class="btn link-white text-white" data-bs-toggle="modal" data-bs-target="#setMarkerModal">{{file}}</button>
                
-           <!-- <a href="#" class="link-white d-inline-flex text-decoration-none rounded text-white">{{file}}</a>  -->
-
-
               </li>
               {% endfor %}
             </ul>

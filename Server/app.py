@@ -1,5 +1,6 @@
 from fileinput import filename
 from importlib.metadata import files
+from site import abs_paths
 from flask import Flask, render_template, request, url_for, abort, send_file, redirect
 
 import os
@@ -20,7 +21,6 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 ## ================ LIST FILES =================== ##
 
 def dir_listing():
-
     # Show directory contents
     files = os.listdir(UPLOAD_FOLDER)
     return files
@@ -36,16 +36,20 @@ def index():
 
 @app.route('/upload_data', methods=['POST'])
 def upload_data():
+
     if request.method == 'POST':
         file = request.files['file']
         fname = request.form['fname']
-
-        if os.path.isfile(os.path.join(app.config['UPLOAD_FOLDER'], fname + ".csv")):
+        abs_path = os.path.join(app.config['UPLOAD_FOLDER'], fname)
+        
+        if os.path.isfile(abs_path + ".csv"):
             return 'A File with the same name already exists. Please choose another Filename.'
 
         else:
-            file.save(os.path.join(app.config['UPLOAD_FOLDER'], fname + ".csv"))
+            file.save(abs_path + ".csv")
             return redirect(url_for('index'))
+
+
 
 
 ## ================ START SERVER =================== ##
