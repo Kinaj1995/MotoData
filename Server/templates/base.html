@@ -64,7 +64,13 @@
           <div class="collapse show" id="home-collapse">
             <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
               {% for file in files %}
-              <li><a href="#" class="link-white d-inline-flex text-decoration-none rounded text-white">{{file}}</a></li>
+              <li>
+                <button type="button" class="btn link-white text-white" data-bs-toggle="button">{{file}}</button>
+               
+           <!-- <a href="#" class="link-white d-inline-flex text-decoration-none rounded text-white">{{file}}</a>  -->
+
+
+              </li>
               {% endfor %}
             </ul>
           </div>

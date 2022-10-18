@@ -32,8 +32,8 @@ controlLayers.addBaseLayer(terrain, 'Stamen Terrain basemap');
 // see more basemap options at https://leaflet-extras.github.io/leaflet-providers/preview/
 
 // Read markers data from data.csv
-$.get("/static/upload/data.csv", function (csvString) {
-
+$.get("static/upload/data.csv", function (csvString) {
+  
   // Use PapaParse to convert string to array of objects
   var data = Papa.parse(csvString, { header: true, dynamicTyping: true }).data;
 

@@ -31,9 +31,11 @@
         <br>
         <p class="lead">Please upload your CSV-File.</p>
         <br>
-        <form action="http://localhost:5000/" method="POST" enctype="multipart/form-data">
-          <input type="file" name="file" />
-          <br>
+        <form action= "/upload_data" method="POST" enctype="multipart/form-data">
+          <label for="fname">Filename:</label>
+          <input type="text" id="fname" name="fname"><label for="csv"> .csv</label><br><br>
+          <input type="file" name="file"/>
+          <br>         
           <br>        
           <div class="modal-footer">
             <input type="submit" class="btn btn-primary align-left" />

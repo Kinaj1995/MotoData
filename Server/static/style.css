@@ -25,7 +25,7 @@ main {
 }
 .btn-toggle:hover,
 .btn-toggle:focus {
-  color: #fff;
+  color: blue;
 }
 
 .btn-toggle::before {
@@ -37,7 +37,7 @@ main {
 }
 
 .btn-toggle[aria-expanded="true"] {
-  color: #fff;
+  color: blue;
 }
 .btn-toggle[aria-expanded="true"]::before {
   transform: rotate(90deg);
