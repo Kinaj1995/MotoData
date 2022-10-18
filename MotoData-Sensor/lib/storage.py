@@ -1,29 +1,66 @@
-##
+## ==================== Storage ==================== ##
+## by Pascal Rusca
+"""
+    ChangeLog:
+    - 0-02: Added new Filenamesystem
+    - 0-01: Init Class
+
+"""
+## ================================================= ##
 
 
 
 
-## Checks SD-Card and gives back new File Name
 
-def getNewFileName(dir_list):
+class STORAGE_lib():
     
-    filename = ""
-    nfn = ""
+    filename = []
     
-    dir_list.sort
+    def __init__(self) -> None:
+        pass
+
     
-
-    if(len(dir_list) > 1):
-
-        filename = int(dir_list[-1].split(".")[0]) + 1
+    def getFilename(self):
+        return str(self.filename[0] + self.filename[1] + self.filename[2] + self.filename[3])
         
-        for i in range (5 - len(str(filename))):
-            nfn = nfn + "0"
-
-        filename = nfn + str(filename) + ".csv"
-        
-    else:
-        filename = "00001.csv"
-                
     
-    return filename
+    ## Checks SD-Card and gives back new File Name
+    def getNewFileName(self, dir_list):
+        
+        fn = []
+        nfn = ""
+        
+        dir_list.sort
+        
+
+        if(len(dir_list) > 1):
+
+            fn = int(dir_list[-1].split("-")[0]) + 1
+            
+            for i in range (5 - len(str(fn))):
+                nfn = nfn + "0"
+
+            self.filename = [nfn + str(fn),"-", "01" , ".csv"]
+            
+        else:
+            self.filename = ["00001","-","01",".csv"]
+               
+        
+        
+        return 
+
+
+
+    def increaseFileName(self, filename):
+        
+        nr = int(self.filename[2]) + 1
+        
+        if(nr > 9):
+            self.filename[2] = str(nr)
+        else:
+            self.filename[2] = "0" + str(nr)
+        
+        
+            
+        return 
+
