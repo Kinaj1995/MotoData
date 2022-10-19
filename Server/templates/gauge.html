@@ -1,0 +1,83 @@
+<!--------------------- SPEED GAUGE ---------------------->
+<!---------- SET "data-value" to display angle ----------->
+
+<div class="col-md-12 text-center">
+    <canvas class="gauge-speed" 
+    data-value="0"
+    style="margin-top:40px;" 
+    data-type="radial-gauge" 
+    data-width="200" 
+    data-glow="false"
+        data-height="200" 
+        data-units="km/h" 
+        data-title="Speed" 
+        data-min-value="0" 
+        data-max-value="120"
+        data-major-ticks="0,10,20,30,40,50,60,70,80,90,100,110,120"
+        data-minor-ticks="2"          
+        data-stroke-ticks="false"
+        data-highlights=    '[{ "from": 0, "to": 50, "color": "#4caf50" },
+                              { "from": 50, "to": 80, "color": "#ff9800" },
+                              { "from": 80, "to": 120, "color": "#f44336" }]'
+        Udata-color-needle-start="rgba(240, 128, 128, 1)" 
+        data-color-needle-end="rgba(255, 160, 122, .9)"
+        data-value-box="true" 
+        data-animation-rule="linear" 
+        data-animation-duration="500"
+        data-needle-shadow="false">
+    </canvas>
+</div>
+
+
+<!------------------ LEAN-ANGLE GAUGE -------------------->
+<!---------- SET "data-value" to display angle ----------->
+
+<canvas data-type="radial-gauge"
+    data-value="0"
+    data-width="200"
+    data-height="200"
+    data-units="Lean-angle"
+    data-title=""
+    data-min-value="-90"
+    data-max-value="90"
+    data-major-ticks="[-90,-75,-60,-45,-30,-15,0,15,30,45,60,75,90]"
+    data-minor-ticks="3"
+    data-stroke-ticks="true"
+    data-highlights='[  {"from": -90, "to": -65, "color": "rgba(255, 0, 0, .4)"},
+                        {"from": 65, "to": 90, "color": "rgba(255, 0, 0, .4)"},
+                        {"from": -65, "to": 65, "color": "rgba(0, 255, 0, .4)"} ]'
+    data-ticks-angle="180"
+    data-start-angle="90"    
+    data-color-major-ticks="#ddd"
+    data-color-minor-ticks="#ddd"
+    data-color-title="#eee"
+    data-color-units="#ccc"
+    data-color-numbers="#eee"
+    data-color-plate="#222"
+    data-border-shadow-width="0"
+    data-borders="true"
+    data-needle-type="arrow"
+    data-needle-width="2"
+    data-needle-circle-size="7"
+    data-needle-circle-outer="true"
+    data-needle-circle-inner="false"
+    data-animation-duration="1500"
+    data-animation-rule="linear"
+    data-color-border-outer="#333"
+    data-color-border-outer-end="#111"
+    data-color-border-middle="#222"
+    data-color-border-middle-end="#111"
+    data-color-border-inner="#111"
+    data-color-border-inner-end="#333"
+    data-color-needle-shadow-down="#333"
+    data-color-needle-circle-outer="#333"
+    data-color-needle-circle-outer-end="#111"
+    data-color-needle-circle-inner="#111"
+    data-color-needle-circle-inner-end="#222"
+    data-value-box-border-radius="3"
+    data-color-value-box-rect="#222"
+    data-color-value-box-rect-end="#333"
+></canvas>
+
+
+<script src="{{ url_for('static', filename='js/gauge.min.js')}}"></script>
