@@ -63,7 +63,7 @@ PORT = 80                       # Port of the Web-Serverv
 # - Init W-Lan
 wlan = network.WLAN(network.AP_IF)
 wlan.active(True)
-wlan.config(essid=SSID, key=KEY, security=wlan.WEP, channel=2)
+wlan.config(ssid=SSID, key=KEY, security=wlan.WEP, channel=2)
 print("AP mode started. SSID: {} IP: {}".format(SSID, wlan.ifconfig()[0]))
 
 ## -- Webserver
@@ -73,14 +73,7 @@ s = socket.socket()
 s.bind(addr)
 s.listen(1)
 
-## -- SD-Card
-CS = machine.Pin(5, machine.Pin.OUT)
-spi = machine.SPI(0,baudrate=1000000,polarity=0,phase=0,bits=8,firstbit=machine.SPI.MSB,sck=Pin(6),mosi=machine.Pin(7),miso=machine.Pin(4))
-sd = sdcard.SDCard(spi,CS)
 
-vfs = uos.VfsFat(sd)
-uos.mount(vfs, "/sd")
-time.sleep(5)
 
 ## -- Storage
 # - Init Storage Lib
@@ -149,7 +142,14 @@ for i in range(2):              # Set values for NeoPixels
 
 n.write()                       # Write NeoPixels Data
 
+## -- SD-Card
+CS = machine.Pin(5, machine.Pin.OUT)
+spi = machine.SPI(0,baudrate=1000000,polarity=0,phase=0,bits=8,firstbit=machine.SPI.MSB,sck=Pin(6),mosi=machine.Pin(7),miso=machine.Pin(4))
+sd = sdcard.SDCard(spi,CS)
 
+vfs = uos.VfsFat(sd)
+uos.mount(vfs, "/sd")
+time.sleep(5)
 
 ## ================ GLOBAL Functions =============== ##
 ## Initialize all global variables, pins and interfaces
@@ -184,7 +184,7 @@ def changeState(endState):
 
 # - For ErrorLoging
 def errorLog(time, date, message):
-    errorlogFile = open("/error.log", "a")
+    errorlogFile = open("error.log", "a")
     errorlogFile.write(str(date) + "--" + str(time) + "-- " + str(message) + "\n")
     errorlogFile.close()
 
@@ -428,15 +428,15 @@ while True:
         
         # Generates new file with csv Header
         try:
-            FILE = open("/sd/" + STR.getFilename(), "a")
-            FILE.write(DATAHEADER)
-            
+            f = open("/sd/" + STR.getFilename(), "w")
+            f.write(DATAHEADER)
+            f.close()
 
-        except OSError as e:
-            print(e)
+        except OSError:
             changeState("ERROR")
         
-                
+        FILE = open("/sd/" + STR.getFilename(), "a")
+        
         changeState("RECORD")
         
         loopCount = 0
@@ -563,7 +563,7 @@ while True:
           
         else:
             print("GPS Message to long or to short")
-            errorLog(GPS.time, GPS.date, "GPS Message to long or to short")         
+                    
                 
         
         time.sleep_ms(50)
