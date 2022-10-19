@@ -36,7 +36,7 @@ from storage import STORAGE_lib
 from gps_lib import GPS_lib, GPSNoCompDataType, GPSMessageError
 
 
-
+import neopixel
 
 
 
@@ -113,6 +113,15 @@ complementaryYaw = 0.0
 
 # - Pindefinitions
 led = Pin(6, Pin.OUT) # Internal Pin
+
+p = Pin(21, Pin.OUT)
+n = neopixel.NeoPixel(p, 2)
+
+for i in range(2):
+    n[i] = (0,0,0)
+
+n.write()
+
 
 
 ## ================ GLOBAL Functions =============== ##
@@ -383,7 +392,9 @@ while True:
         
 
                
-        
+        n[0] = (100,0,0)
+        n[1] = (100,0,0)
+        n.write()
         time.sleep(5)
         
 
@@ -392,14 +403,21 @@ while True:
     if(Core0State == "INIT_RECORD"):
         print("INIT_RECORD")
         
+        n[0] = (0,254,0)
+        n[1] = (0,254,0)
+        n.write()
+        
         # Generate new Filename for the Record
         dir_list =  os.listdir("/sd")
         FILENAME = STR.getNewFileName(dir_list)
         
         # Generates new file with csv Header
-        f = open("/sd/" + STR.getFilename(), "w")
-        f.write(DATAHEADER)
-        f.close()
+        try:
+            f = open("/sd/" + STR.getFilename(), "w")
+            f.write(DATAHEADER)
+            f.close()
+        except OSError as e:
+            print(e)
         
         
         FILE = open("/sd/" + STR.getFilename(), "a")
@@ -529,6 +547,8 @@ while True:
     if(Core0State == "STOP_RECORD"):
         print(" --- STOP_RECORD ---")
         
+        n.write()
+        
         try:
             FILE.close()
         
@@ -544,6 +564,9 @@ while True:
 
     if(Core0State == "CALIBRATE"):
         print(" --- CALIBRATE ---")
+        n[0] = (0,0,254)
+        n[1] = (0,0,254)
+        n.write()
         
         calibrateIMU(1000, 5000)
         
