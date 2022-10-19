@@ -4,6 +4,7 @@ from site import abs_paths
 from flask import Flask, render_template, request, url_for, abort, send_file, redirect
 
 import os
+import csv
 
 UPLOAD_FOLDER = 'static/upload'
 
@@ -25,6 +26,15 @@ def dir_listing():
     files = os.listdir(UPLOAD_FOLDER)
     return files
 
+"""
+def set_marker(fname):
+    results = []
+    with open(UPLOAD_FOLDER + fname) as csvfile:
+        # change contents to floats
+        reader = csv.reader(csvfile, quoting=csv.QUOTE_NONNUMERIC)
+        for row in reader:  # each row is a list
+            results.append(row)
+"""
 
 ## ================ TEMPLATES =================== ##
 
@@ -41,7 +51,7 @@ def upload_data():
         file = request.files['file']
         fname = request.form['fname']
         abs_path = os.path.join(app.config['UPLOAD_FOLDER'], fname)
-        
+
         if os.path.isfile(abs_path + ".csv"):
             return 'A File with the same name already exists. Please choose another Filename.'
 
@@ -49,6 +59,9 @@ def upload_data():
             file.save(abs_path + ".csv")
             return redirect(url_for('index'))
 
+@app.route('/gauge')
+def gauge():
+    return render_template('gauge.html')
 
 
 
