@@ -461,9 +461,13 @@ while True:
 
         
       
-        #-- Read Data from Serial if avaiable       
+        #-- Read Data from Serial if avaiable
+        nowtime = time.ticks_ms()
         while GPSSerial.any():    
-            GPSData += str(GPSSerial.read())     
+            GPSData += str(GPSSerial.read())
+            
+            if(time.ticks_ms() - nowtime > 500):
+                break
         
 
         
@@ -471,7 +475,7 @@ while True:
         if(len(GPSData) > 100):
             GPSData = None
             
-        time.ticks_ms()
+
                 
         # -- When GPS Data is recived it will get processed
         if(GPSData):
@@ -498,7 +502,7 @@ while True:
             
             except MemoryError as e:
                 print(e)
-                errorlLog(GPS.time, GPS.date, "MemoryError: " + e)
+                errorLog(GPS.time, GPS.date, "MemoryError: " + e)
                 time.sleep(5)
                 
             
@@ -520,8 +524,13 @@ while True:
 
             except TypeError as e:
                 print(e)
-                errorlLog(GPS.time, GPS.date, "TypeError: File Write")
+                errorLog(GPS.time, GPS.date, "TypeError: File Write")
                 FILE.close()
+                changeState("READY")
+            
+            except OSError as e:
+                print("OSError:" + str(e))
+                errorLog(GPS.time, GPS.date, "OSError: File Write" + str(e))
                 changeState("READY")
                 
                 
@@ -554,7 +563,7 @@ while True:
         
         except AttributeError as e:
             print(e)
-            errorlLog(GPS.time, GPS.date, "AttributeError: STOP_RECORD")
+            errorLog(GPS.time, GPS.date, "AttributeError: STOP_RECORD")
         
         time.sleep(2)
         
