@@ -561,8 +561,7 @@ while True:
             print(str(loopCount) + ";" + str(interval) + ";" + str(complementaryRoll) + ";" + str(complementaryPitch) + ";" + str(GPS.time) + ";" + str(GPS.date) + ";" + str(GPS.fix))
 
           
-        else:
-            print("GPS Message to long or to short")
+
                     
                 
         
