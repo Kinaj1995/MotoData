@@ -49,8 +49,29 @@
     'className': 'custom'
   }
 
+  function convertDMStoD(DMS) {
+
+    final = 0.00000
+
+    wholeDegrees = Math.trunc(0.01 * DMS);
+
+
+    final = wholeDegrees + (DMS - 100.0 * wholeDegrees) / 60.0;
+
+    console.log(wholeDegrees)
+    console.log(final)
+
+    return final
+
+
+
+
+  }
+
+
+
   // Read markers data from CSV
-  $.get("{{ url_for('static', filename='upload/')}}" + "{{file}}", function (csvString) {
+  $.get("{{ url_for('static', filename='upload/')}}" + "00017.csv", function (csvString) {
 
     // Use PapaParse to convert string to array of objects
     var data = Papa.parse(csvString, { header: true, dynamicTyping: true }).data;
@@ -60,9 +81,9 @@
     for (var i in data) {
       var row = data[i];
 
-      var marker = L.marker([row.Latitude, row.Longitude], {
+      var marker = L.marker([convertDMStoD(row.Latitude), convertDMStoD(row.Longitude)], {
         icon: redIcon
-      }).bindPopup(customPopup,customOptions);
+      }).bindPopup(customPopup, customOptions);
 
       marker.addTo(map);
     }
