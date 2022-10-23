@@ -12,6 +12,8 @@ var controlLayers = L.control.layers(null, null, {
   collapsed: true
 }).addTo(map);
 
+
+
 // display Carto basemap tiles with light features and labels
 var light = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
   attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>, &copy; <a href="https://carto.com/attribution">CARTO</a>',
