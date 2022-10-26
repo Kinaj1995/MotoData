@@ -20,81 +20,68 @@
 <script src='https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster-src.js'></script>
 
 
+
+
+
+
+
+
+
 <script>
 
+
+  // -- Converts DMS coordinates to Decimal
+  function convertDMStoD(DMS) {
+
+    result = 0.00000
+    wholeDegrees = Math.trunc(0.01 * DMS);
+    result = wholeDegrees + (DMS - 100.0 * wholeDegrees) / 60.0;
+    return result
+
+  }
+
+
+  // -- Init MarkerCluster
   var mcg = L.markerClusterGroup({
     chunkedLoading: true,
     //spiderfyOnMaxZoom: true
     disableClusteringAtZoom: 16
   });
 
-  // create custom icon
-  var blueIcon = L.icon({
-    iconUrl: 'http://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=%E2%80%A2|abcdef&chf=a,s,ee00FFFF',
-    iconSize: [20, 30], // size of the icon
-    popupAnchor: [0, -15]
-  });
-  var greenIcon = L.icon({
-    iconUrl: 'http://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=%E2%80%A2|2ecc71&chf=a,s,ee00FFFF',
-    iconSize: [20, 30], // size of the icon
-    popupAnchor: [0, -15]
-  });
-  var redIcon = L.icon({
-    iconUrl: 'http://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=%E2%80%A2|e85141&chf=a,s,ee00FFFF',
-    iconSize: [20, 30], // size of the icon
-    popupAnchor: [0, -15]
-  });
 
-
-  // specify popup options 
+  // -- specify popup options 
   var customOptions =
   {
     'maxWidth': '500',
     'className': 'custom'
   }
 
-  function convertDMStoD(DMS) {
-
-    final = 0.00000
-
-    wholeDegrees = Math.trunc(0.01 * DMS);
 
 
-    final = wholeDegrees + (DMS - 100.0 * wholeDegrees) / 60.0;
+  // -- Sets Markers on the Map
+  {% for s in mapsettings.settings %}
 
-    return final
+  console.log("{{s.filename}}");
 
-  }
-
+  var mapIcon = L.icon({
+    iconUrl: 'http://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=%E2%80%A2|' + '{{s.color}}' + '&chf=a,s,ee00FFFF',
+    iconSize: [20, 30], // size of the icon
+    popupAnchor: [0, -15]
+  });
 
 
   // Read markers data from CSV
-  $.get("{{ url_for('static', filename='upload/')}}" + "00017.csv", function (csvString) {
+  $.get("{{ url_for('static', filename='upload/')}}" + "{{ s.filename }}", function (csvString) {
 
     // Use PapaParse to convert string to array of objects
     var data = Papa.parse(csvString, { header: true, dynamicTyping: true }).data;
-
-    // For each row in data, create a marker and add it to the map
-    // For each row, columns `Latitude`, `Longitude`, and `Title` are required
-    /*
-    for (var i in data) {
-      var row = data[i];
-      var markerPopup = "<br/>Speed: " +  row.Speed  + "km/h<br/>Roll: " + row.Roll + "°<br/>";
-
-      var marker = L.marker([convertDMStoD(row.Latitude), convertDMStoD(row.Longitude)], {
-        icon: redIcon
-      }).bindPopup(markerPopup, customOptions);
-
-      marker.addTo(map);
-    }
-    */
 
     for (var i in data) {
       var row = data[i];
       var markerPopup = "<br/>Speed: " + row.Speed + "km/h<br/>Roll: " + row.Roll + "°<br/>";
 
       var marker = L.marker([convertDMStoD(row.Latitude), convertDMStoD(row.Longitude)], {
-        icon: redIcon
+        icon: mapIcon
       }).bindPopup(markerPopup, customOptions);
 
       mcg.addLayer(marker);
@@ -102,6 +89,8 @@
     map.addLayer(mcg);
 
   });
+
+  {% endfor %}
 </script>
 
 
@@ -116,31 +105,35 @@
       </div>
       <div class="modal-body">
         <br>
-        <p class="lead">Please choose a color.</p>
-        <br>
-        <div class="form-check">
-          <input class="form-check-input" type="radio" name="flexRadioDefault" id="flexRadioBlue">
-          <label class="form-check-label" for="flexRadioBlue">
-            Blue
-          </label>
-        </div>
-        <div class="form-check">
-          <input class="form-check-input" type="radio" name="flexRadioDefault" id="flexRadioGreen" checked>
-          <label class="form-check-label" for="flexRadioGreen">
-            Green
-          </label>
-        </div>
-        <div class="form-check">
-          <input class="form-check-input" type="radio" name="flexRadioDefault" id="flexRadioRed" checked>
-          <label class="form-check-label" for="flexRadioRed">
-            Red
-          </label>
-        </div>
+
+        <form action="/selectfile" method="POST" enctype="multipart/form-data">
+          <input id="selected_filename" type="hidden" name="filename" value="">
+          <p class="lead">Please choose a color.</p>
+          <br>
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="flexRadioBlue" id="flexRadioBlue">
+            <label class="form-check-label" for="flexRadioBlue">
+              Blue
+            </label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="flexRadioGreen" id="flexRadioGreen">
+            <label class="form-check-label" for="flexRadioGreen">
+              Green
+            </label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="flexRadioRed" id="flexRadioRed">
+            <label class="form-check-label" for="flexRadioRed">
+              Red
+            </label>
+          </div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-        <button type="button" class="btn btn-primary">Set Marker</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Schliessen</button>
+        <input type="submit" class="btn btn-primary align-left" />
       </div>
+      </form>
     </div>
   </div>
 </div>
@@ -172,9 +165,29 @@
     </div>
   </div>
 </div>
+{% endblock %}
+
+{% block afterscript %}
+<script>
+
+  var myModalEl = document.getElementById('setMarkerModal');
+
+  console.log(myModalEl);
+
+  myModalEl.addEventListener('show.bs.modal', function (event) {
+    var button = event.relatedTarget; // Gets the button who opens the modal
+    console.log(button);
+
+    var filename = button.getAttribute('filename');
+
+    console.log(filename);
+
+
+    document.getElementById('selected_filename').setAttribute('value', filename);
+  })
 
 
 
-
+</script>
 
 {% endblock %}

@@ -62,10 +62,10 @@
             My Data
           </button>
           <div class="collapse show" id="home-collapse">
-            <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
-              {% for file in files %}
+            <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small" style="padding-left: 15%;">
+              {% for file in dirlist %}
               <li>
-                <button type="button" class="btn link-white text-white" data-bs-toggle="modal" data-bs-target="#setMarkerModal">{{file}}</button>
+                <button type="button" class="btn link-white text-white" data-bs-toggle="modal" data-bs-target="#setMarkerModal" filename="{{file}}">{{file}}</button>
                
               </li>
               {% endfor %}
@@ -94,7 +94,7 @@
           </a>
         </li>
         <li>
-          <a href="#" class="nav-link text-white">
+          <a href="/resetsettings" class="nav-link text-white">
             <svg class="bi pe-none me-2" width="16" height="16">
               <use xlink:href="#people-circle" />
             </svg>
@@ -121,7 +121,9 @@
 
   {% block afterscript %} {% endblock %}
 
-
+    
 </body>
+
+
 
 </html>
