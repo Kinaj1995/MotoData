@@ -200,19 +200,12 @@
 {% block afterscript %}
 <script>
 
-  var myModalEl = document.getElementById('setMarkerModal');
+  var setMarkerModal = document.getElementById('setMarkerModal');
 
-  console.log(myModalEl);
 
-  myModalEl.addEventListener('show.bs.modal', function (event) {
+  setMarkerModal.addEventListener('show.bs.modal', function (event) {
     var button = event.relatedTarget; // Gets the button who opens the modal
-    console.log(button);
-
     var filename = button.getAttribute('filename');
-
-    console.log(filename);
-
-
     document.getElementById('selected_filename').setAttribute('value', filename);
   })
 
