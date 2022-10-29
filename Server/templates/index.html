@@ -105,15 +105,15 @@
       </div>
       <div class="modal-body">
         <br>
-        {% if mapsettings.colorcount < 3 %}
-        <form action="/selectfile" method="POST" enctype="multipart/form-data">
+        {% if mapsettings.colorcount < 3 %} <form action="/selectfile" method="POST" enctype="multipart/form-data">
           <input id="selected_filename" type="hidden" name="filename" value="">
           <p class="lead">Please choose a color.</p>
           <br>
 
           {% for c in mapsettings.colors %}
           <div class="form-check">
-            <input class="form-check-input" type="radio" name="flexRadio" value="{{c[1]}}" id="flexRadioBlue" {% if c[2] %} disabled {% endif %}>
+            <input class="form-check-input" type="radio" name="flexRadio" value="{{c[1]}}" id="flexRadioBlue" {% if c[2]
+              %} disabled {% endif %}>
             <label class="form-check-label" for="flexRadioBlue">
               {{c[0]}}
             </label>
@@ -128,7 +128,8 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Schliessen</button>
-        {% if mapsettings.colorcount < 3 %}<input type="submit" class="btn btn-primary align-left" />{% endif %}
+        {% if mapsettings.colorcount
+        < 3 %}<input type="submit" class="btn btn-primary align-left" />{% endif %}
       </div>
       </form>
     </div>
@@ -162,6 +163,37 @@
     </div>
   </div>
 </div>
+
+</div>
+<!-- Modal Delete Data -->
+<div class="modal fade" id="delFileModal" tabindex="-1" aria-labelledby="delFileModalLabel1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h1 class="modal-title fs-5" id="uploadModalLabel">Delete File</h1>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form action="/deletfile" method="POST" enctype="multipart/form-data">
+          <input id="deleting_filename" type="hidden" name="filename" value="">
+          <p class="lead">The following file will be deleted!</p>
+          <div id="deleting_filename_display"></div>
+          <br>
+
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+
+        <input type="submit" class="btn btn-danger align-left" value="Delete" />
+      </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+
+
 {% endblock %}
 
 
@@ -182,6 +214,20 @@
 
 
     document.getElementById('selected_filename').setAttribute('value', filename);
+  })
+
+
+
+
+  var delModal = document.getElementById('delFileModal');
+
+
+  delModal.addEventListener('show.bs.modal', function (event) {
+    var button = event.relatedTarget; // Gets the button who opens the modal
+    var filename = button.getAttribute('filename');
+    console.log(filename);
+    document.getElementById('deleting_filename').setAttribute('value', filename);
+    document.getElementById('deleting_filename_display').innerHTML = filename
   })
 
 

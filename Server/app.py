@@ -136,7 +136,15 @@ def selectFile():
 
     return redirect(url_for('index'))
 
+@app.route('/deletfile', methods=['POST'])
+def deleteFile():
 
+    data = request.form
+
+    if("filename" in data):
+        os.remove(os.path.join(app.config['UPLOAD_FOLDER'], data['filename']))
+
+    return redirect(url_for('index'))
 
 @app.route('/gauge')
 def gauge():
