@@ -10,7 +10,16 @@ import csv
 UPLOAD_FOLDER = 'static/upload'
 
 
-MAPSETTINGS = {"settings": []}
+MAPSETTINGS = {"settings": [],
+                "disableinput": False,
+                "colorcount": 0,
+                "colors": [
+                    ["Red", "e85141", False],
+                    ["Green","2ecc71", False],
+                    ["Blue","abcdef", False]
+                    ]
+                }
+
 
 
 app = Flask(__name__)
@@ -46,6 +55,8 @@ def set_marker(fname):
 @app.route('/', methods=['GET', 'POST'])
 def index():
     global MAPSETTINGS
+
+
     if request.method == 'GET':
         return render_template('index.html', dirlist=dir_listing(), file="00013.csv", mapsettings=MAPSETTINGS)
 
@@ -71,8 +82,18 @@ def upload_data():
 def resetSettings():
 
     global MAPSETTINGS
+
+
     MAPSETTINGS.clear()
-    MAPSETTINGS = {"settings": []}
+    MAPSETTINGS = {"settings": [],
+                "disableinput": False,
+                "colorcount": 0,
+                "colors": [
+                    ["Red", "e85141", False],
+                    ["Green","2ecc71", False],
+                    ["Blue","abcdef", False]
+                    ]
+                }
 
     return redirect(url_for('index'))
 
@@ -83,20 +104,29 @@ def selectFile():
 
     global MAPSETTINGS
 
+
     data = request.form
 
     color = ""
     filename = data["filename"]
 
-    if ('flexRadioRed' in data):
-        print("Red")
-        color = "e85141"
-    if ('flexRadioGreen' in data):
-        print("Green")
-        color = "2ecc71"
-    if ('flexRadioBlue' in data):
-        print("Blue")
-        color = "abcdef"
+    print(data['flexRadio'])
+
+    if ('flexRadio' in data):
+        color = data['flexRadio']
+
+        for c in MAPSETTINGS["colors"]:
+            if(color in c):
+                c[2] = True
+                MAPSETTINGS["colorcount"] += 1
+
+    else:
+        print("No color found")
+        color = "e85141" # Set default color
+
+
+
+
 
 
     MAPSETTINGS["settings"].append({"filename": filename, "color" : color})

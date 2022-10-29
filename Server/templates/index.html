@@ -78,7 +78,7 @@
 
     for (var i in data) {
       var row = data[i];
-      var markerPopup = "<br/>Speed: " + row.Speed + "km/h<br/>Roll: " + row.Roll + "°<br/>";
+      var markerPopup = "<br/>Date: " + row.Date + "<br/>Time: " + row.Time + "<br/>Speed: " + row.Speed + "km/h<br/>Roll: " + row.Roll + "°<br/>";
 
       var marker = L.marker([convertDMStoD(row.Latitude), convertDMStoD(row.Longitude)], {
         icon: mapIcon
@@ -105,33 +105,30 @@
       </div>
       <div class="modal-body">
         <br>
-
+        {% if mapsettings.colorcount < 3 %}
         <form action="/selectfile" method="POST" enctype="multipart/form-data">
           <input id="selected_filename" type="hidden" name="filename" value="">
           <p class="lead">Please choose a color.</p>
           <br>
+
+          {% for c in mapsettings.colors %}
           <div class="form-check">
-            <input class="form-check-input" type="radio" name="flexRadioBlue" id="flexRadioBlue">
+            <input class="form-check-input" type="radio" name="flexRadio" value="{{c[1]}}" id="flexRadioBlue" {% if c[2] %} disabled {% endif %}>
             <label class="form-check-label" for="flexRadioBlue">
-              Blue
+              {{c[0]}}
             </label>
           </div>
-          <div class="form-check">
-            <input class="form-check-input" type="radio" name="flexRadioGreen" id="flexRadioGreen">
-            <label class="form-check-label" for="flexRadioGreen">
-              Green
-            </label>
-          </div>
-          <div class="form-check">
-            <input class="form-check-input" type="radio" name="flexRadioRed" id="flexRadioRed">
-            <label class="form-check-label" for="flexRadioRed">
-              Red
-            </label>
-          </div>
+          {% endfor %}
+          {% endif %}
+
+          {% if mapsettings.colorcount >= 3 %}
+          <p class="lead">Please reset Markers to add another route</p>
+          {% endif %}
+
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Schliessen</button>
-        <input type="submit" class="btn btn-primary align-left" />
+        {% if mapsettings.colorcount < 3 %}<input type="submit" class="btn btn-primary align-left" />{% endif %}
       </div>
       </form>
     </div>
@@ -166,6 +163,7 @@
   </div>
 </div>
 {% endblock %}
+
 
 {% block afterscript %}
 <script>
