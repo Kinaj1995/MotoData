@@ -3,29 +3,30 @@
 !theme plain
 
 
+state Error {
+    Error : Error Info
+    Error : Error Logging
 
-[*] --> Startup
+}
 
+state WebServer {
+    WaitForClient --> SendSite : Client Connect
+    SendSite --> WaitForClient : Client Disconnect
+    SendSite --> SendSite : Download Data
+}
 
+state Startup{
+    Startup : Init SD-Card
+    Startup : Init Sensor
+    Startup : Init GPS
+    Startup : Init Web Server
 
-Startup --> Ready
-Startup : Init SD-Card
-Startup : Init Sensor
-Startup : Init GPS
-Startup : Init Web Server
+}
 
-Ready --> Calibration : Start Calibration
-Calibration : LED Blue
-Calibration : Calibrate IMU
+state Ready {
+    Ready : LED Green
+}
 
-
-
-Calibration --> Ready : End Calibration
-
-
-
-Ready --> Record : Start Record
-Ready : LED Green
 
 state Record {
 
@@ -38,18 +39,50 @@ state Record {
     SaveData --> Ready : Stop Record
 }
 
+state Calibration{
+    Calibration : LED Blue
+    Calibration : Calibrate IMU
+}
 
 
-Ready --> [*] : Shutdown
 
+
+
+[*] --> Startup
 
 Startup --> WebServer
+Startup --> Ready
+Startup --> Error : Init Error
 
-state WebServer {
-    WaitForClient --> SendSite : Client Connect
-    SendSite --> WaitForClient : Client Disconnect
-    SendSite --> SendSite : Donwload Data
-}
+
+
+Ready --> Calibration : Start Calibration
+Ready --> Record : Start Record
+Ready --> [*] : Shutdown
+
+Record --> Error : Record Error
+
+Calibration --> Ready : End Calibration
+Calibration --> Error : Calibration Error
+
+
+Error --> [*] : Shutdown
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

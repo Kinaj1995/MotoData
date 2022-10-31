@@ -82,7 +82,7 @@ STR = STORAGE_lib()
 DATAHEADER = "LOOPCOUNT;INTERVAL(ms);ROLL;PITCH;TIME;DATE;LAT;LONG;SPEED;ALT\n"
 FILENAME = ""
 FILE = None
-MAXLINECOUNT = 10000            # Max lines a file will recive
+MAXLINECOUNT = 1000            # Max lines a file will recive
 
 
 ## -- States
@@ -435,7 +435,7 @@ while True:
         except OSError:
             changeState("ERROR")
         
-        FILE = open("/sd/" + STR.getFilename(), "a")
+        #FILE = open("/sd/" + STR.getFilename(), "a")
         
         changeState("RECORD")
         
@@ -528,7 +528,7 @@ while True:
             
             # -- File writing
             try:               
-
+                FILE = open("/sd/" + STR.getFilename(), "a")
                 FILE.write(str(loopCount) + ";" + str(interval) + ";" )
                 FILE.write(str(complementaryRoll) + ";" + str(complementaryPitch) + ";")
                 FILE.write(str(GPS.time) + ";" + str(GPS.date) + ";" + str(GPS.fix))
@@ -537,7 +537,7 @@ while True:
                     FILE.write(";" + str(GPS.lat) + ";" + str(GPS.long) + ";" + str(GPS.speed) + "\n")
                 else:
                     FILE.write("\n")
-               
+                FILE.close()
 
             except TypeError as e:
                 print(e)
