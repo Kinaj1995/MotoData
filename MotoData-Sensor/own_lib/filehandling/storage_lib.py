@@ -32,7 +32,7 @@ class STORAGE_lib():
 
         if(len(dir_list) > 1):
 
-            fn = int(dir_list[-1].split("-")[0]) + 1
+            fn = int(dir_list[-1].split(".")[0]) + 1
             
             for i in range (5 - len(str(fn))):
                 nfn = nfn + "0"

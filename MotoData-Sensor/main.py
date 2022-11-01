@@ -59,20 +59,34 @@ PORT = 80                       # Port of the Web-Serverv
 ##
 ## ================================================= ##
 
+INIT_ERROR = 0
+
+
+
+## ================== GLOBAL VARS ================== ##
+## Initialize all global variables, pins and interfaces
+##
+## ================================================= ##
+
 ## -- W-LAN
 # - Init W-Lan
-wlan = network.WLAN(network.AP_IF)
-wlan.active(True)
-wlan.config(essid=SSID, key=KEY, security=wlan.WEP, channel=2)
-print("AP mode started. SSID: {} IP: {}".format(SSID, wlan.ifconfig()[0]))
-
+try:
+    wlan = network.WLAN(network.AP_IF)
+    wlan.active(True)
+    wlan.config(essid=SSID, key=KEY, security=wlan.WEP, channel=2)
+    print("AP mode started. SSID: {} IP: {}".format(SSID, wlan.ifconfig()[0]))
+except:
+    INIT_ERROR += 1
+    
 ## -- Webserver
 # - Init Webserver
-addr = socket.getaddrinfo('0.0.0.0', 80)[0][-1]
-s = socket.socket()
-s.bind(addr)
-s.listen(1)
-
+try:
+    addr = socket.getaddrinfo('0.0.0.0', 80)[0][-1]
+    s = socket.socket()
+    s.bind(addr)
+    s.listen(1)
+except:
+    INIT_ERROR += 1
 
 
 ## -- Storage
@@ -82,7 +96,7 @@ STR = STORAGE_lib()
 DATAHEADER = "LOOPCOUNT;INTERVAL(ms);ROLL;PITCH;TIME;DATE;LAT;LONG;SPEED;ALT\n"
 FILENAME = ""
 FILE = None
-MAXLINECOUNT = 1000            # Max lines a file will recive
+
 
 
 ## -- States
@@ -93,11 +107,15 @@ StateChange = False
 
 ## -- GPS
 # - SerialPort for GPS
-GPSSerial = UART(0, baudrate=9600, tx=Pin(0), rx=Pin(1))
+try:
+    GPSSerial = UART(0, baudrate=9600, tx=Pin(0), rx=Pin(1))
 
-GPSData = bytearray(255)        # GPS message buffer
-timeCount = time.ticks_ms()     # To messure time between the recieved GPS messages
-loopCount = 0                   # To messure the linecount for files
+    GPSData = bytearray(255)        # GPS message buffer
+    timeCount = time.ticks_ms()     # To messure time between the recieved GPS messages
+    loopCount = 0                   # To messure the linecount for files
+
+except:
+    INIT_ERROR += 1
 
 # - Init GPS Parser
 GPS = GPS_lib()
@@ -105,8 +123,11 @@ GPS = GPS_lib()
 
 ## -- IMU 
 # - I2C for IMU
-IMU = LSM6DSOX(I2C(0, scl=Pin(13), sda=Pin(12)))		
-
+try:
+    IMU = LSM6DSOX(I2C(0, scl=Pin(13), sda=Pin(12)))		
+except:
+    INIT_ERROR += 1
+    
 # - units m/s/s i.e. accelZ if often 9.8 (gravity)
 accelX = 0.0
 accelY = 0.0
@@ -132,9 +153,13 @@ complementaryYaw = 0.0
 sLock = _thread.allocate_lock()
 
 # - Pindefinitions
-intled = Pin(6, Pin.OUT)        # Internal Pin
+try:
+    intled = Pin(6, Pin.OUT)        # Internal Pin
 
-p = Pin(21, Pin.OUT)            # Pin for NeoPixels
+    p = Pin(21, Pin.OUT)			# Pin for NeoPixels
+except:
+    INIT_ERROR += 1
+
 n = neopixel.NeoPixel(p, 2)     # Init Neopixels
 
 for i in range(2):              # Set values for NeoPixels
@@ -143,13 +168,16 @@ for i in range(2):              # Set values for NeoPixels
 n.write()                       # Write NeoPixels Data
 
 ## -- SD-Card
-CS = machine.Pin(5, machine.Pin.OUT)
-spi = machine.SPI(0,baudrate=1000000,polarity=0,phase=0,bits=8,firstbit=machine.SPI.MSB,sck=Pin(6),mosi=machine.Pin(7),miso=machine.Pin(4))
-sd = sdcard.SDCard(spi,CS)
+try:
+    CS = machine.Pin(5, machine.Pin.OUT)
+    spi = machine.SPI(0,baudrate=1000000,polarity=0,phase=0,bits=8,firstbit=machine.SPI.MSB,sck=Pin(6),mosi=machine.Pin(7),miso=machine.Pin(4))
+    sd = sdcard.SDCard(spi,CS)
 
-vfs = uos.VfsFat(sd)
-uos.mount(vfs, "/sd")
-time.sleep(5)
+    vfs = uos.VfsFat(sd)
+    uos.mount(vfs, "/sd")
+    time.sleep(5)
+except:
+    INIT_ERROR += 1
 
 ## ================ GLOBAL Functions =============== ##
 ## Initialize all global variables, pins and interfaces
@@ -217,8 +245,13 @@ GPS_send_command(b'PMTK300,200,0,0,0,0', True)			# 5HZ
 ##
 ## ================================================= ##
 
-SensorState = "READY"
-StateChange = True
+if(INIT_ERROR > 0):
+    SensorState = "ERROR"
+    StateChange = True
+else:
+    SensorState = "READY"
+    StateChange = True
+
 
 
 

@@ -5,16 +5,16 @@ def web_content(state):
     if(state == "READY"):
         html = """
         <p>
-            <a href=\"?RECORD\"><button class="button">Record</button></a>
+            <a href=\"?RECORD\"><button class="button button_red">Record</button></a>
         </p>
         <p>
-            <a href=\"?CALIBRATE\"><button class="button button1">Calibrate</button></a>
+            <a href=\"?CALIBRATE\"><button class="button button_blue">Calibrate</button></a>
         </p>        
         """
     elif(state == "RECORD"):
         html = """
         <p>
-            <a href=\"?RECORD_STOP\"><button class="button">Record Stop</button></a>
+            <a href=\"?RECORD_STOP\"><button class="button button_red">Record Stop</button></a>
         </p>
       
         """
@@ -33,7 +33,7 @@ def web_content(state):
             <script>
                 setTimeout(function(){
                     window.location.href = 'http://192.168.4.1/';
-                }, 8000);
+                }, 3000);
             </script>
         """
     elif(state == "STOP_RECORD"):
@@ -42,7 +42,7 @@ def web_content(state):
             <script>
                 setTimeout(function(){
                     window.location.href = 'http://192.168.4.1/';
-                }, 8000);
+                }, 3000);
             </script>
         """
     elif(state == "ERROR"):
@@ -72,7 +72,6 @@ def web_page(state):
             }
 
             .button {
-                background-color: #ce1b0e;
                 border: none;
                 color: white;
                 padding: 16px 40px;
@@ -84,9 +83,13 @@ def web_page(state):
                 cursor: pointer;
             }
 
-            .button1 {
-                background-color: #000000;
+            .button_red {
+                background-color: #ce1b0e;
             }
+            .button_blue {
+                background-color: #003AFF;
+            }
+
         </style>
     </head>
 
