@@ -37,7 +37,7 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 def dir_listing():
     # Show directory contents
-    files = os.listdir(UPLOAD_FOLDER)
+    files = sorted(os.listdir(UPLOAD_FOLDER))
     return files
 
 ## ================ CHECK FILE Extentions =================== ##
