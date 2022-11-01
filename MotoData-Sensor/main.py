@@ -30,7 +30,7 @@ import math
 
 # - SD Card
 import sdcard
-from storage import STORAGE_lib
+from storage_lib import STORAGE_lib
 
 # - GPS
 from gps_lib import GPS_lib, GPSNoCompDataType, GPSMessageError
@@ -424,7 +424,7 @@ while True:
         
         # Generate new Filename for the Record
         dir_list =  os.listdir("/sd")
-        FILENAME = STR.getNewFileName(dir_list)
+        STR.getNewFileName(dir_list)
         
         # Generates new file with csv Header
         try:
@@ -434,37 +434,11 @@ while True:
 
         except OSError:
             changeState("ERROR")
-        
-        #FILE = open("/sd/" + STR.getFilename(), "a")
-        
-        changeState("RECORD")
-        
-        loopCount = 0
-        lastTime = time.ticks_us()
-
-
-## =============== State RENEW FILE ================ ##    
-## 
-## ================================================= ## 
-    if(Core0State == "RENEW_FILE"):
-        print("RENEW_FILE")
-        
-        # Generate new Filename for the Record
-        dir_list =  os.listdir("/sd")
-        FILENAME = STR.increaseFileName(FILENAME)
                 
-        try:
-            FILE = open("/sd/" + STR.getFilename(), "a")            
-
-        except OSError as e:
-            print(e)
-            changeState("ERROR")
-               
         changeState("RECORD")
         
         loopCount = 0
         lastTime = time.ticks_us()
-
 
 
 ## ================= State RECORD ================== ##    
@@ -474,25 +448,20 @@ while True:
     if(Core0State == "RECORD"):
         #print("RECORD")
         GPSData = ""
-        
-        
-        
+          
         if(readIMU()):
             currentTime = time.ticks_us()
-            lastInterval = currentTime - lastTime  # expecting this to be ~104Hz +- 4%
+            lastInterval = currentTime - lastTime  # expecting this to be ~100Hz +- 4%
             lastTime = currentTime
      
             doCalculations()
                 
-
-        
-      
         #-- Read Data from Serial if avaiable
         nowtime = time.ticks_ms()
         while GPSSerial.any():    
             GPSData += str(GPSSerial.read())
             
-            if(time.ticks_ms() - nowtime > 500):
+            if(time.ticks_ms() - nowtime > 510):
                 print("GPS Message took to long")
                 break
         
@@ -537,34 +506,25 @@ while True:
                     FILE.write(";" + str(GPS.lat) + ";" + str(GPS.long) + ";" + str(GPS.speed) + "\n")
                 else:
                     FILE.write("\n")
+                    
                 FILE.close()
-
-            except TypeError as e:
-                print(e)
-                errorLog(GPS.time, GPS.date, "TypeError: File Write")
-                FILE.close()
-                changeState("ERROR")
             
             except OSError as e:
                 print("OSError:" + str(e))
                 errorLog(GPS.time, GPS.date, "OSError: File Write" + str(e))
                 changeState("ERROR")
+  
+            except MemoryError as e:
+                print(e)
+                errorLog(GPS.time, GPS.date, "MemoryError: " + str(e))
                 
-                
-            if(loopCount >= MAXLINECOUNT):
-                FILE.close()
-                changeState("RENEW_FILE")
             
             
             # -- Debug Print
             print(GPSData)
             print(str(loopCount) + ";" + str(interval) + ";" + str(complementaryRoll) + ";" + str(complementaryPitch) + ";" + str(GPS.time) + ";" + str(GPS.date) + ";" + str(GPS.fix))
 
-          
 
-                    
-                
-        
         time.sleep_ms(50)
 
 
@@ -574,16 +534,6 @@ while True:
 
     if(Core0State == "STOP_RECORD"):
         print(" --- STOP_RECORD ---")
-        
-        n.write()
-        
-        try:
-            FILE.close()
-        
-        except AttributeError as e:
-            print(e)
-            errorLog(GPS.time, GPS.date, "AttributeError: STOP_RECORD")
-            changeState("ERROR")
         
         time.sleep(2)
         

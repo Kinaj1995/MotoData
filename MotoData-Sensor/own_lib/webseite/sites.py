@@ -1,22 +1,19 @@
-def web_buttons(state):
+def web_content(state):
 
     html = """ """
 
     if(state == "READY"):
         html = """
         <p>
-            <i class="fas fa-lightbulb fa-3x" style="color:#c81919;"></i>
             <a href=\"?RECORD\"><button class="button">Record</button></a>
         </p>
         <p>
-            <i class="far fa-lightbulb fa-3x" style="color:#000000;"></i>
             <a href=\"?CALIBRATE\"><button class="button button1">Calibrate</button></a>
         </p>        
         """
     elif(state == "RECORD"):
         html = """
         <p>
-            <i class="fas fa-lightbulb fa-3x" style="color:#c81919;"></i>
             <a href=\"?RECORD_STOP\"><button class="button">Record Stop</button></a>
         </p>
       
@@ -50,7 +47,7 @@ def web_buttons(state):
         """
     elif(state == "ERROR"):
         html = """
-            <h2> Wait for the start of the Recording </h2>
+            <h2> Something went wrong </h2>
         """
 
     return html
@@ -97,7 +94,7 @@ def web_page(state):
         <h2>MotoData Sensor Site</h2>
         <p>Current Sensor State: <strong>""" + state + """</strong></p>
 
-    """ + web_buttons(state) + """
+    """ + web_content(state) + """
         
 
 

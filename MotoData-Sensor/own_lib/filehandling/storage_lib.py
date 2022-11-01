@@ -9,25 +9,22 @@
 ## ================================================= ##
 
 
-
-
-
 class STORAGE_lib():
     
-    filename = []
+    filename = ""
     
     def __init__(self) -> None:
         pass
 
     
     def getFilename(self):
-        return str(self.filename[0] + self.filename[1] + self.filename[2] + self.filename[3])
+        return str(self.filename)
         
     
     ## Checks SD-Card and gives back new File Name
     def getNewFileName(self, dir_list):
         
-        fn = []
+        fn = ""
         nfn = ""
         
         dir_list.sort
@@ -40,10 +37,10 @@ class STORAGE_lib():
             for i in range (5 - len(str(fn))):
                 nfn = nfn + "0"
 
-            self.filename = [nfn + str(fn),"-", "01" , ".csv"]
+            self.filename = nfn + str(fn) + ".csv"
             
         else:
-            self.filename = ["00001","-","01",".csv"]
+            self.filename = "00001.csv"
                
         
         
@@ -51,16 +48,6 @@ class STORAGE_lib():
 
 
 
-    def increaseFileName(self, filename):
-        
-        nr = int(self.filename[2]) + 1
-        
-        if(nr > 9):
-            self.filename[2] = str(nr)
-        else:
-            self.filename[2] = "0" + str(nr)
-        
-        
-            
-        return 
+
+
 
