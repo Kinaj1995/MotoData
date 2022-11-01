@@ -63,7 +63,7 @@ PORT = 80                       # Port of the Web-Serverv
 # - Init W-Lan
 wlan = network.WLAN(network.AP_IF)
 wlan.active(True)
-wlan.config(ssid=SSID, key=KEY, security=wlan.WEP, channel=2)
+wlan.config(essid=SSID, key=KEY, security=wlan.WEP, channel=2)
 print("AP mode started. SSID: {} IP: {}".format(SSID, wlan.ifconfig()[0]))
 
 ## -- Webserver
