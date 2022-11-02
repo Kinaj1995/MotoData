@@ -55,16 +55,68 @@ PORT = 80                       # Port of the Web-Serverv
 
 
 ## ================== GLOBAL VARS ================== ##
-## Initialize all global variables, pins and interfaces
+## Initialize all global variables
 ##
 ## ================================================= ##
 
-INIT_ERROR = 0
+INIT_ERROR = 0					# Count of eccured Errors on Init
+
+## -- OUTPUT File
+DATAHEADER = "Loopcount;Interval;Roll;Pitch;Time;Date;Fix;Latitude;Longitude;Speed\n"		# Header of the CSV File
+
+## -- States
+SensorState = "INIT"            # States INIT, READY, INIT_RECORD, RECORD, STOP_RECORD, CALIBRATION, RENEW_FILE, ERROR
+Core0State = "ERROR"			# Init Cor0State as ERROR
+StateChange = False				# Var for State Changes
+
+## -- GPS
+GPSData = bytearray(255)        # GPS message buffer
+GPS_MAX_TIMEOUT = 520			# Time to wait for ending the SerialRead
+timeCount = time.ticks_ms()     # To messure time between the recieved GPS messages
+loopCount = 0                   # To messure the linecount for files
+
+## --Semaphores
+sLock = _thread.allocate_lock()
+
+## -- Angle calculation
+# - units m/s/s i.e. accelZ if often 9.8 (gravity)
+accelX = 0.0
+accelY = 0.0
+accelZ = 0.0
+
+# - units dps (degrees per second)
+gyroX = 0.0 
+gyroY = 0.0 
+gyroZ = 0.0
+
+# - units dps
+gyroDriftX = 0.0
+gyroDriftY = 0.0
+gyroDriftZ = 0.0
+
+# - units degrees (excellent roll, pitch, yaw minor drift)
+complementaryRoll = 0.0
+complementaryPitch = 0.0
+complementaryYaw = 0.0 
 
 
 
-## ================== GLOBAL VARS ================== ##
-## Initialize all global variables, pins and interfaces
+## ============ GLOBAL Pin Definitions ============= ##
+## Initialize all pins
+##
+## ================================================= ##
+
+# - Pindefinitions
+try:
+    intled = Pin(6, Pin.OUT)        # Internal LED Pin
+    p = Pin(21, Pin.OUT)			# Pin for NeoPixels
+except:
+    INIT_ERROR += 1
+
+
+
+## =============== GLOBAL Interfaces =============== ##
+## Initialize all interfaces
 ##
 ## ================================================= ##
 
@@ -89,30 +141,15 @@ except:
     INIT_ERROR += 1
 
 
-## -- Storage
+## -- Filehandling
 # - Init Storage Lib
 STR = STORAGE_lib()
-
-DATAHEADER = "LOOPCOUNT;INTERVAL(ms);ROLL;PITCH;TIME;DATE;LAT;LONG;SPEED;ALT\n"
-FILENAME = ""
-FILE = None
-
-
-
-## -- States
-SensorState = "INIT"            # States INIT, READY, INIT_RECORD, RECORD, STOP_RECORD, CALIBRATION, RENEW_FILE, ERROR
-Core0State = "INIT"
-StateChange = False
 
 
 ## -- GPS
 # - SerialPort for GPS
 try:
     GPSSerial = UART(0, baudrate=9600, tx=Pin(0), rx=Pin(1))
-
-    GPSData = bytearray(255)        # GPS message buffer
-    timeCount = time.ticks_ms()     # To messure time between the recieved GPS messages
-    loopCount = 0                   # To messure the linecount for files
 
 except:
     INIT_ERROR += 1
@@ -127,62 +164,38 @@ try:
     IMU = LSM6DSOX(I2C(0, scl=Pin(13), sda=Pin(12)))		
 except:
     INIT_ERROR += 1
-    
-# - units m/s/s i.e. accelZ if often 9.8 (gravity)
-accelX = 0.0
-accelY = 0.0
-accelZ = 0.0
 
-# - units dps (degrees per second)
-gyroX = 0.0 
-gyroY = 0.0 
-gyroZ = 0.0
-
-# - units dps
-gyroDriftX = 0.0
-gyroDriftY = 0.0
-gyroDriftZ = 0.0
-
-# - units degrees (excellent roll, pitch, yaw minor drift)
-complementaryRoll = 0.0
-complementaryPitch = 0.0
-complementaryYaw = 0.0    
-
-
-## --Semaphores
-sLock = _thread.allocate_lock()
-
-# - Pindefinitions
+## -- NeoPixels
 try:
-    intled = Pin(6, Pin.OUT)        # Internal Pin
-
-    p = Pin(21, Pin.OUT)			# Pin for NeoPixels
+    n = neopixel.NeoPixel(p, 2)     # Init Neopixels
+    for i in range(2):              # Set values for NeoPixels
+        n[i] = (0,0,0)
+    n.write()                       # Write NeoPixels Data
 except:
     INIT_ERROR += 1
 
-n = neopixel.NeoPixel(p, 2)     # Init Neopixels
-
-for i in range(2):              # Set values for NeoPixels
-    n[i] = (0,0,0)
-
-n.write()                       # Write NeoPixels Data
-
 ## -- SD-Card
 try:
+# - Init SD-Card
     CS = machine.Pin(5, machine.Pin.OUT)
     spi = machine.SPI(0,baudrate=1000000,polarity=0,phase=0,bits=8,firstbit=machine.SPI.MSB,sck=Pin(6),mosi=machine.Pin(7),miso=machine.Pin(4))
     sd = sdcard.SDCard(spi,CS)
 
+# - Mount the SD-Card in directory "/sd"
     vfs = uos.VfsFat(sd)
     uos.mount(vfs, "/sd")
     time.sleep(5)
 except:
     INIT_ERROR += 1
 
+
+
 ## ================ GLOBAL Functions =============== ##
-## Initialize all global variables, pins and interfaces
+## Functions that are used globaly
 ##
 ## ================================================= ##
+
+## -- Command Sender to configure the GPS Module
 def GPS_send_command(command, add_checksum):
     GPSSerial.write(b"$")
     GPSSerial.write(command)
@@ -196,21 +209,20 @@ def GPS_send_command(command, add_checksum):
     time.sleep(1)
 
 
-
+## -- ChangeState
 def changeState(endState):
     global SensorState
     global StateChange
     
-    
-    sLock.acquire()
+    sLock.acquire()			# Acquires the lock
        
     SensorState = endState
     StateChange = True
         
-    sLock.release()
+    sLock.release()			# Releases the lock
 
 
-# - For ErrorLoging
+## -- ErrorLoging
 def errorLog(time, date, message):
     errorlogFile = open("error.log", "a")
     errorlogFile.write(str(date) + "--" + str(time) + "-- " + str(message) + "\n")
@@ -218,7 +230,7 @@ def errorLog(time, date, message):
 
 
 ## =====================  GPS  ===================== ##
-## Set the GPS settings
+## Set the GPS to the desired specifications
 ##
 ## ================================================= ##
 
@@ -242,7 +254,7 @@ GPS_send_command(b'PMTK300,200,0,0,0,0', True)			# 5HZ
 
 ## ====================  States  =================== ##
 ## Set the States
-##
+## If an error accured during INIT the Sensor changes to the ERROR State
 ## ================================================= ##
 
 if(INIT_ERROR > 0):
@@ -270,14 +282,9 @@ def WebServer():
             cl, addr = s.accept()
             print('client connected from', addr)
 
-            request = cl.recv(1024)
-            #print(request)
-
-            request = str(request)
+            request = str(cl.recv(1024))
+            #print(request)			# Debug Request            
             
-            
-            
-            #print('GET Rquest Content = %s' % request)
             btn_record = request.find('/?RECORD')
             btn_record_stop = request.find('/?RECORD_STOP')
             btn_calibrate = request.find('/?CALIBRATE')
@@ -293,11 +300,11 @@ def WebServer():
             if btn_calibrate == 6:
                 changeState("CALIBRATE")
                
-            response = web_page(SensorState)   
+            response = web_page(SensorState)   # Generates the HTML File based on the current state
             
             
             cl.send('HTTP/1.0 200 OK\r\nContent-type: text/html\r\n\r\n')
-            cl.send(response)
+            cl.send(response)					# Sends the HTML to the client
             cl.close()
             
             
@@ -314,10 +321,11 @@ _thread.start_new_thread(WebServer, ()) # Starts the WebServer on Core1
 
 
 ## ==================== IMU Calc =================== ##
-## Calculates the angles with the IMU
+## Functions for calculating the angles with the IMU
 ##
 ## ================================================= ##
 
+# - Reads the IMU
 def readIMU():
     
     global gyroX, gyroY, gyroZ, accelX, accelY, accelZ
@@ -336,9 +344,10 @@ def readIMU():
         return True
         
     except:
+        errorLog("","", "Error during IMU reading")
         return False
         
-    
+# - Calibration of the IMU drift   
 def calibrateIMU(delayMillis, calibrationMillis):
     
     calibrationCount = 0
@@ -368,7 +377,7 @@ def calibrateIMU(delayMillis, calibrationMillis):
     gyroDriftY = sumY / calibrationCount
     gyroDriftZ = sumZ / calibrationCount
 
-
+# - Calculating angle with the IMU data
 def doCalculations():
     
     global complementaryRoll, complementaryPitch, complementaryYaw
@@ -392,13 +401,11 @@ def printCalculations():
 
 
 ## ==================== Core 0  ==================== ##
-## 
+## Code that runs on code 0
 ##
 ## ================================================= ##
 
 while True:
-    
-    
     
 # ----- Checks for StateChanges    
     if(sLock.locked() == False and StateChange):        
@@ -494,7 +501,7 @@ while True:
         while GPSSerial.any():    
             GPSData += str(GPSSerial.read())
             
-            if(time.ticks_ms() - nowtime > 510):
+            if(time.ticks_ms() - nowtime > GPS_MAX_TIMEOUT):
                 print("GPS Message took to long")
                 break
         
@@ -522,9 +529,9 @@ while True:
                 print("GPS Message Error")
                 errorLog(GPS.time, GPS.date, "no complete GPS Message")
             
-            except MemoryError as e:
+            except MemoryError:
                 print(e)
-                errorLog(GPS.time, GPS.date, "MemoryError: " + e)
+                errorLog(GPS.time, GPS.date, "MemoryError: ")
                 time.sleep(0.2)
                 
             
@@ -547,14 +554,14 @@ while True:
                 errorLog(GPS.time, GPS.date, "OSError: File Write" + str(e))
                 changeState("ERROR")
   
-            except MemoryError as e:
+            except MemoryError:
                 print(e)
-                errorLog(GPS.time, GPS.date, "MemoryError: " + str(e))
+                errorLog(GPS.time, GPS.date, "MemoryError: )
                 
             
             
             # -- Debug Print
-            print(GPSData)
+            #print(GPSData)
             print(str(loopCount) + ";" + str(interval) + ";" + str(complementaryRoll) + ";" + str(complementaryPitch) + ";" + str(GPS.time) + ";" + str(GPS.date) + ";" + str(GPS.fix))
 
 
