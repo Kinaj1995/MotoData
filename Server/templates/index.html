@@ -41,12 +41,9 @@
   }
 
 
-  // -- Init MarkerCluster
-  var mcg = L.markerClusterGroup({
-    chunkedLoading: true,
-    //spiderfyOnMaxZoom: true
-    disableClusteringAtZoom: 16
-  });
+
+
+
 
 
   // -- specify popup options 
@@ -56,39 +53,69 @@
     'className': 'custom'
   }
 
+  // -- Init MarkerCluster
+  var mcg = L.markerClusterGroup({
+    chunkedLoading: true,
+    //spiderfyOnMaxZoom: true
+    disableClusteringAtZoom: 16
+  });
+
 
 
   // -- Sets Markers on the Map
   {% for s in mapsettings.settings %}
 
-  console.log("{{s.filename}}");
 
-  var mapIcon = L.icon({
-    iconUrl: 'http://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=%E2%80%A2|' + '{{s.color}}' + '&chf=a,s,ee00FFFF',
-    iconSize: [20, 30], // size of the icon
-    popupAnchor: [0, -15]
-  });
+
+  console.log("{{s.filename}}");
+  console.log("{{s.color}}");
+  //console.log(mapIcon)
+  console.log("{{ url_for('static', filename='pictures/pointer_')}}" + "{{ s.color }}" + ".png")
+  console.log('http://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=%E2%80%A2|' + '{{s.color}}' + '&chf=a,s,ee00FFFF');
+
+
+
+
 
 
   // Read markers data from CSV
   $.get("{{ url_for('static', filename='upload/')}}" + "{{ s.filename }}", function (csvString) {
+
+    var mapIcon = L.icon({
+      iconUrl: 'http://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=%E2%80%A2|' + '{{s.color}}' + '&chf=a,s,ee00FFFF',
+      iconSize: [20, 30], // size of the icon
+      popupAnchor: [0, -15]
+    });
 
     // Use PapaParse to convert string to array of objects
     var data = Papa.parse(csvString, { header: true, dynamicTyping: true }).data;
 
     for (var i in data) {
       var row = data[i];
-      var markerPopup = "<br/>Date: " + row.Date + "<br/>Time: " + row.Time + "<br/>Speed: " + row.Speed + "km/h<br/>Roll: " + row.Roll + "°<br/>";
+      var markerPopup ="<br/>Filename: " + "{{ s.filename }}" + "<br/>Date: " + row.Date + "<br/>Time: " + row.Time + "<br/>Speed: " + row.Speed + "km/h<br/>Roll: " + parseInt(row.Roll) + "°<br/>";
 
-      var marker = L.marker([convertDMStoD(row.Latitude), convertDMStoD(row.Longitude)], {
-        icon: mapIcon
-      }).bindPopup(markerPopup, customOptions);
+      try {
+        var marker = L.marker([convertDMStoD(row.Latitude), convertDMStoD(row.Longitude)], {
+          icon: mapIcon
 
-      mcg.addLayer(marker);
+        }).bindPopup(markerPopup, customOptions);
+
+        mcg.addLayer(marker);
+      } catch (error) {
+        console.error(error);
+        console.error(row);
+      }
+
+
+
+
+
     }
     map.addLayer(mcg);
 
   });
+
+
 
   {% endfor %}
 </script>
@@ -126,7 +153,7 @@
           {% endif %}
 
       </div>
-      
+
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Schliessen</button>
         {% if mapsettings.colorcount
@@ -151,7 +178,7 @@
         <br>
         <p class="lead">Choose CSV-File:</p>
         <form action="/upload_data" method="POST" enctype="multipart/form-data">
-          <input type="file" name="file" />
+          <input type="file" name="file" accept=".csv" />
           <br>
           <br>
           <br>
@@ -167,6 +194,8 @@
 </div>
 
 </div>
+
+
 <!-- Modal Delete Data -->
 <div class="modal fade" id="delFileModal" tabindex="-1" aria-labelledby="delFileModalLabel1" aria-hidden="true">
   <div class="modal-dialog">

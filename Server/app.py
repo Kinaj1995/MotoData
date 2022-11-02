@@ -8,7 +8,7 @@ import os
 import csv
 
 UPLOAD_FOLDER = 'static/upload'
-
+ALLOWED_EXTENSIONS = {'csv'}
 
 MAPSETTINGS = {"settings": [],
                 "disableinput": False,
@@ -37,18 +37,14 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 def dir_listing():
     # Show directory contents
-    files = os.listdir(UPLOAD_FOLDER)
+    files = sorted(os.listdir(UPLOAD_FOLDER))
     return files
 
-"""
-def set_marker(fname):
-    results = []
-    with open(UPLOAD_FOLDER + fname) as csvfile:
-        # change contents to floats
-        reader = csv.reader(csvfile, quoting=csv.QUOTE_NONNUMERIC)
-        for row in reader:  # each row is a list
-            results.append(row)
-"""
+## ================ CHECK FILE Extentions =================== ##
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
 
 ## ================ TEMPLATES =================== ##
 
@@ -67,13 +63,22 @@ def upload_data():
     if request.method == 'POST':
         file = request.files['file']
         fname = request.form['fname']
-        abs_path = os.path.join(app.config['UPLOAD_FOLDER'], fname)
 
-        if os.path.isfile(abs_path + ".csv"):
+        if(fname):
+            datapath = os.path.join(app.config['UPLOAD_FOLDER'], fname + ".csv")
+        else:
+            datapath = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
+
+        if os.path.isfile(datapath):
             return 'A File with the same name already exists. Please choose another Filename.'
 
+        if file and allowed_file(file.filename):
+            
+            file.save(datapath)
+            return redirect(url_for('index'))
+        
         else:
-            file.save(abs_path + ".csv")
+            print('unsupported File')
             return redirect(url_for('index'))
 
 
