@@ -155,9 +155,9 @@
       </div>
 
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Schliessen</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
         {% if mapsettings.colorcount
-        < 3 %}<input type="submit" class="btn btn-primary align-left" />{% endif %}
+        < 3 %}<input type="submit" class="btn btn-primary align-left" value="Set Marker"/>{% endif %}
       </div>
       </form>
     </div>
@@ -178,15 +178,16 @@
         <br>
         <p class="lead">Choose CSV-File:</p>
         <form action="/upload_data" method="POST" enctype="multipart/form-data">
-          <input type="file" name="file" accept=".csv" />
+          <input type="file" name="file" value="Choose File" accept=".csv" />
           <br>
           <br>
           <br>
-          <p class="lead">Filename:</p>
+          <p class="lead">Filename (optional):</p>
           <input type="text" id="fname" name="fname"><label for="csv"> .csv</label><br><br>
           <br>
           <div class="modal-footer">
-            <input type="submit" class="btn btn-primary align-left" />
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <input type="submit" class="btn btn-primary align-left" value="Upload"/>
         </form>
       </div>
     </div>
